@@ -11,6 +11,7 @@ export type AppState = {
 
 type Actions = ReturnType<
   typeof ImageLoaded
+| typeof AddRect
 | typeof SetProgress
 | typeof SetStatus
 | typeof AddResult
@@ -18,6 +19,9 @@ type Actions = ReturnType<
 
 const IMAGE_LOADED = "IMAGE_LOADED" as const;
 export const ImageLoaded = (src: string) => ({ type: IMAGE_LOADED, src });
+
+const ADD_RECT = "ADD_RECT" as const;
+export const AddRect = (rect: Rectangle) => ({ type: ADD_RECT, rect });
 
 const SET_PROGRESS = "SET_PROGRESS" as const;
 export const SetProgress = (progress: number) => ({ type: SET_PROGRESS, progress });
@@ -32,6 +36,10 @@ function reducer(state: AppState, action: Actions): AppState {
   switch(action.type) {
     case IMAGE_LOADED: {
       return {...state,  imageSrc: action.src};
+    }
+
+    case ADD_RECT: {
+      return { ...state, rectangles: [ ...state.rectangles, action.rect ] };
     }
 
     case SET_PROGRESS: {

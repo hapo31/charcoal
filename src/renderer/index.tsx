@@ -4,9 +4,10 @@ import { ipcRenderer } from "electron";
 import DnDArea from "./components/DnDArea";
 import styled from "styled-components";
 import { createWorker, Worker } from "tesseract.js";
-import { SetProgress, AddResult, SetStatus, useAppReducer } from "./reducer/useAppReducer";
+import { SetProgress, AddResult, SetStatus, useAppReducer, AddRect, ImageLoaded } from "./reducer/useAppReducer";
 import ProgressBar from "./components/ProgressBar";
 import ImageCutter from "./components/ImageCutter";
+import Rectangle from "../domain/Recrangle";
 
 type LoggerResult = {
   workerId: string;
@@ -38,8 +39,9 @@ const App = () => {
     const files = event.dataTransfer.files;
     const file = files.item(0);
     if (file != null) {
-      const text: string = await recognize(worker, file.path);
-      dispatch(AddResult(text));
+      dispatch(ImageLoaded(file.path));
+      // const text: string = await recognize(worker, file.path);
+      // dispatch(AddResult(text));
     }
   }, []);
 
@@ -49,14 +51,27 @@ const App = () => {
     if (!path) {
       return;
     }
-    const text: string = await recognize(worker, path);
-    dispatch(AddResult(text));
+
+    dispatch(ImageLoaded(path));
+
+    // const text: string = await recognize(worker, path);
+    // dispatch(AddResult(text));
   },[]);
+
+  const onAddRect = useCallback((rect: Rectangle) => {
+    dispatch(AddRect(rect));
+  }, []);
   
   return <RootContainer>
-    {state.imageSrc == null ? <DnDArea onClick={onClick} onDrop={onDrop}>
-      ここにドロップ
-    </DnDArea> : <ImageCutter src={state.imageSrc}  /> }
+    {
+      state.imageSrc == null ?
+        <DnDArea onClick={onClick} onDrop={onDrop}>
+          ここにドロップ
+        </DnDArea> : <ImageCutter 
+                        src={state.imageSrc}
+                        onAddRect={onAddRect}
+                        rectangles={state.rectangles} />
+    }
     <p>{state.status}</p>
     {state.progress !== 0 ? <ProgressBar color={"red"} percentOf0To1={state.progress} /> : null}
     <p>結果</p>
