@@ -13,6 +13,7 @@ type Props = {
 };
 
 export default (props: Props) => {
+  const containerRef = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [rect, setRect] = useState<Rectangle | null>(null);
@@ -20,6 +21,7 @@ export default (props: Props) => {
   const [{startResultX, startResultY}, setResult] = useState({ startResultX: -1, startResultY: -1 });
 
   const onMouseDown = useCallback((event: React.MouseEvent) => {
+    const div = event.target as HTMLDivElement;
     event.preventDefault();
     setPos({
       startX: event.pageX,
@@ -33,7 +35,7 @@ export default (props: Props) => {
     });
     setResult({
       startResultX: event.pageX,
-      startResultY: event.pageY
+      startResultY: event.pageY + div.scrollTop
     });
     setIsDragging(true);
     console.log("onMouseDown");
@@ -54,6 +56,7 @@ export default (props: Props) => {
   }, [isDragging, rect]);
 
   const onMouseUp = useCallback((event: React.MouseEvent) => {
+    const div = event.target as HTMLDivElement;
     if (!isDragging) {
       return;
     }
@@ -76,7 +79,7 @@ export default (props: Props) => {
       left: startResultX,
       top: startResultY,
       right: event.pageX,
-      bottom: event.pageY
+      bottom: event.pageY + div.scrollTop
     });
 
     const width = fixedResultRect.right - fixedResultRect.left;
@@ -121,6 +124,7 @@ export default (props: Props) => {
   }, [props.rectangles]);
 
   return <Container
+            ref={containerRef}
             onMouseDown={onMouseDown}
             onMouseMove={onMouseMove}
             onMouseUp={onMouseUp}
@@ -139,13 +143,17 @@ export default (props: Props) => {
     {props.rectangles.map((rect, i) => i === props.showRectangleIndex ?
       <Rect color="red" position="absolute"
         key={`rect-${i}`}
-        {...rect}
+        left={rect.left}
+        right={rect.right}
+        top={rect.top - (containerRef.current?.scrollTop || 0)}
+        bottom={rect.bottom - (containerRef.current?.scrollTop || 0)}
         onClick={createOnClickRect(i)} /> : null)}
   </Container>
 };
 
 
 const Container = styled.div`
+  overflow-y: scroll;
   width: 100%;
   height: 100%;
 `;
