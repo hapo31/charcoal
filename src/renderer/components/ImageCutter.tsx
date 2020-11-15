@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import styled from "styled-components";
 import Rectangle from "../../domain/Recrangle";
 
@@ -6,14 +6,18 @@ import Rectangle from "../../domain/Recrangle";
 type Props = {
   src: string;
   rectangles: Rectangle[];
+  onLoad: (event: React.ChangeEvent<HTMLImageElement>) => void;
   onClickRect?: (rectIndex: number) => void;
-  onAddRect: (rect: Rectangle) => void;
+  onAddRect: (rect: Rectangle, resultImage: ImageData) => void;
 };
 
 export default (props: Props) => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const imgRef = useRef<HTMLImageElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [rect, setRect] = useState<Rectangle | null>(null);
   const [{startX, startY}, setPos] = useState({ startX: -1, startY: -1 });
+  const [{startResultX, startResultY}, setResult] = useState({ startResultX: -1, startResultY: -1 });
 
   const onMouseDown = useCallback((event: React.MouseEvent) => {
     event.preventDefault();
@@ -26,6 +30,10 @@ export default (props: Props) => {
       top: event.clientY,
       right: event.clientX,
       bottom: event.clientY,
+    });
+    setResult({
+      startResultX: event.pageX,
+      startResultY: event.pageY
     });
     setIsDragging(true);
     console.log("onMouseDown");
@@ -43,7 +51,6 @@ export default (props: Props) => {
       bottom: event.clientY
     });
     setRect(fixedRect);
-    console.log({"onMouseMove": fixedRect});
   }, [isDragging, rect]);
 
   const onMouseUp = useCallback((event: React.MouseEvent) => {
@@ -57,12 +64,48 @@ export default (props: Props) => {
       right: event.pageX,
       bottom: event.pageY
     });
-    props.onAddRect(fixedRect);
+
+    const scaleFactor = window.devicePixelRatio;
+
+    const fixedResultRect = fixRect({
+      left: startResultX,
+      top: startResultY,
+      right: event.pageX,
+      bottom: event.pageY
+    });
+
+    const width = fixedResultRect.right - fixedResultRect.left;
+    const height = fixedResultRect.bottom - fixedResultRect.top;
+
+    const canvas = canvasRef.current;
+    if (canvas == null) {
+      return;
+    }
+
+    canvas.width = width * scaleFactor;
+    canvas.height = height * scaleFactor;
+
+    const ctx = canvas.getContext("2d");
+    if (ctx == null) {
+      return;
+    }
+
+    const img = imgRef.current;
+    if (img == null) {
+      return;
+    }
+
+    const widthRatio = img.naturalWidth / img.width;
+    const heightRatio = img.naturalHeight / img.height;
+
+    ctx.drawImage(img, fixedResultRect.left * widthRatio, fixedResultRect.top * heightRatio, width * widthRatio, height * heightRatio, 0, 0, width * scaleFactor, height * scaleFactor);
+
+    props.onAddRect(fixedRect, ctx.getImageData(0, 0, canvas.width, canvas.height));
     setIsDragging(false);
     setPos({startX: -1, startY: -1});
     setRect(null);
     console.log({"onMouseUp": fixedRect});
-  }, [isDragging]);
+  }, [isDragging, startResultX, startResultY, canvasRef, imgRef]);
 
   const createOnClickRect = useCallback((index: number) => {
     return () => {
@@ -74,14 +117,26 @@ export default (props: Props) => {
   }, [props.rectangles]);
 
   return <Container
-          onMouseDown={onMouseDown}
-          onMouseMove={onMouseMove}
-          onMouseUp={onMouseUp}
-          onMouseLeave={onMouseUp} // マウスが要素外に出たとき、mouseUpと同じ処理をする
+            onMouseDown={onMouseDown}
+            onMouseMove={onMouseMove}
+            onMouseUp={onMouseUp}
+            // onMouseLeave={onMouseUp} // マウスが要素外に出たとき、mouseUpと同じ処理をする
           >
-    <img src={props.src} style={{float: "left"}} alt=""/>
+    <img src={props.src}
+        ref={imgRef}
+        onLoad={props.onLoad}
+        style={{
+          float: "left",
+          display: "inline-block",
+          width: "100%"
+        }} alt=""/>
+
     {rect ? <Rect position="fixed" {...rect} /> : null}
-    {props.rectangles.map((rect, i) => <Rect position="absolute" key={`rect-${i}`} {...rect} onClick={createOnClickRect(i)} />)}
+    {props.rectangles.map((rect, i) => <Rect position="absolute"
+                                          key={`rect-${i}`}
+                                          {...rect}
+                                          onClick={createOnClickRect(i)} />)}
+    <canvas ref={canvasRef} style={{display: "none"}} />
   </Container>
 };
 

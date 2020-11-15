@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback } from "react";
 import { render } from "react-dom";
 import { ipcRenderer } from "electron";
 import DnDArea from "./components/DnDArea";
@@ -18,7 +18,7 @@ type LoggerResult = {
 
 const RootContainer = styled.div`
   height: 90vh;
-  width: auto;
+  width: 100%;
 `;
 
 const App = () => {
@@ -30,19 +30,18 @@ const App = () => {
     status: ""
   });
 
-  const [worker] = useState(createWorker({ logger: (m: LoggerResult) => {
-    dispatch(SetStatus(m.status));
-    dispatch(SetProgress(m.progress));
-  }}));
+  const onImageLoad = useCallback(async (event: React.ChangeEvent<HTMLImageElement>) => {
+    const {width, height} = event.target;
+    await ipcRenderer.invoke("set-window-size", width, height);
+  }, []);
 
-  const onDrop = useCallback(async (event: React.DragEvent)=>{
+  const onDrop = useCallback(async (event: React.DragEvent) => {
     const files = event.dataTransfer.files;
     const file = files.item(0);
-    if (file != null) {
-      dispatch(ImageLoaded(file.path));
-      // const text: string = await recognize(worker, file.path);
-      // dispatch(AddResult(text));
+    if (file == null) {
+      return;
     }
+    dispatch(ImageLoaded(file.path));
   }, []);
 
 
@@ -53,45 +52,49 @@ const App = () => {
     }
 
     dispatch(ImageLoaded(path));
-
-    // const text: string = await recognize(worker, path);
-    // dispatch(AddResult(text));
   },[]);
 
-  const onAddRect = useCallback((rect: Rectangle) => {
+  const onAddRect = useCallback(async (rect: Rectangle, resultImage: ImageData) => {
     dispatch(AddRect(rect));
+
+    const worker = createWorker({ logger: (m: LoggerResult) => {
+      dispatch(SetStatus(m.status));
+      dispatch(SetProgress(m.progress));
+    }});
+    const result = await recognize(worker, resultImage);
+
+    dispatch(AddResult(result));
   }, []);
-  
+
   return <RootContainer>
     {
       state.imageSrc == null ?
         <DnDArea onClick={onClick} onDrop={onDrop}>
           ここにドロップ
-        </DnDArea> : <ImageCutter 
+        </DnDArea> : <ImageCutter
                         src={state.imageSrc}
+                        onLoad={onImageLoad}
                         onAddRect={onAddRect}
                         rectangles={state.rectangles} />
     }
     <p>{state.status}</p>
-    {state.progress !== 0 ? <ProgressBar color={"red"} percentOf0To1={state.progress} /> : null}
+    {state.progress !== 0 ? <ProgressBar color="red" percentOf0To1={state.progress} /> : null}
     <p>結果</p>
-    
-    {state.resultTexts.map(text => <pre>{text}</pre>)}
-    
+
+    {state.resultTexts.map(text => <p>{text}</p>)}
   </RootContainer>
 };
 
 render(<App />, document.getElementById("app"));
 
-async function recognize(worker: Worker, path: string) {
+async function recognize(worker: Worker, imageLike: Tesseract.ImageLike) {
   await worker.load();
   await worker.loadLanguage("jpn");
   await worker.initialize("jpn");
-  const { data: { text } } = await worker.recognize(path);
+  const { data: { text } } = await worker.recognize(imageLike);
   await worker.terminate();
 
   console.log({text});
 
   return text;
 }
-
