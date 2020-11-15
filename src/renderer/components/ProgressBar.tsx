@@ -4,20 +4,19 @@ import styled, { CSSProperties } from "styled-components";
 type Props = {
   percentOf0To1: number;
   color: string;
-  barStyle?: CSSProperties;
 };
 
 export default (props: Props) => (
   <Container>
     <Bar percent={props.percentOf0To1}
-      color={props.color}
-      style={props.barStyle} />
-  </Container> 
+      color={props.color} />
+  </Container>
 );
 
 type StyledProps = {
   percent: number;
   color: string;
+  style?: CSSProperties
 }
 
 const Container = styled.span`
@@ -28,8 +27,12 @@ const Container = styled.span`
   height: 30px;
 `;
 
-const Bar = styled.div`
+const Bar = styled.div.attrs((props: StyledProps) => ({
+  style: {
+    ...props.style,
+    width: `calc(100% - ${Math.floor((1.0 - props.percent) * 100)}%)`
+  }
+}))`
   height: 100%;
-  width: calc(100% - ${({percent}: StyledProps) => `${Math.floor((1.0 - percent) * 100) }%`});
   background-color: ${({color}: StyledProps) => color};
 `;
