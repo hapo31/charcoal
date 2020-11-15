@@ -1,4 +1,4 @@
-import { app, BrowserWindow, dialog, ipcMain, screen } from "electron";
+import { app, BrowserWindow, dialog, ipcMain, screen, clipboard } from "electron";
 
 class OCRApp {
 
@@ -15,7 +15,9 @@ class OCRApp {
       });
 
       this.window.loadURL(`file://${__dirname}/index.html`);
+      this.window.setMenu(null);
       this.window.webContents.openDevTools();
+
     });
 
     app.on("window-all-closed", () => {
@@ -55,6 +57,10 @@ class OCRApp {
 
     ipcMain.handle("set-window-size", (_, width: number, height: number) => {
       this.window?.setContentSize(width, height);
+    });
+
+    ipcMain.handle("set-text-clipboard", (_, text) => {
+      clipboard.writeText(text);
     });
   }
 }

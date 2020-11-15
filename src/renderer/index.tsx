@@ -17,25 +17,6 @@ type LoggerResult = {
   progress: number;
 };
 
-const RootContainer = styled.div`
-  display: flex;
-  height: 99vh;
-  width: 100%;
-`;
-
-const ImageContainer = styled.div`
-  flex: 5 1;
-`;
-
-const ResultContainer = styled.div`
-  justify-content: center;
-  min-width: 100px;
-  max-width: 200px;
-  flex-grow: 1;
-  overflow-y: scroll;
-  border-left: solid 2px gray;
-`;
-
 const App = () => {
 
   const [showRectIndex, setShowRectIndex] = useState(-1);
@@ -105,9 +86,12 @@ const App = () => {
       }
     </ImageContainer>
     <ResultContainer>
-      <p style={{textAlign: "center"}}>結果</p>
+      <ResultTitle>結果</ResultTitle>
       {state.ocrResults.map((result, i) => (
       <ResultView
+        onClick={text => {
+          ipcRenderer.invoke("set-text-clipboard", text);
+        }}
         onMouseEnter={()=>{
           setShowRectIndex(i);
         }}
@@ -122,7 +106,33 @@ const App = () => {
   </RootContainer>
 };
 
-render(<App />, document.getElementById("app"));
+const RootContainer = styled.div`
+  display: flex;
+  height: 99vh;
+  width: 100%;
+`;
+
+const ImageContainer = styled.div`
+  flex: 5 1;
+`;
+
+const ResultTitle = styled.h2`
+  margin-top: 3px;
+  font-size: 15px;
+  color: white;
+  font-weight: bold;
+  text-align: center;
+`;
+
+const ResultContainer = styled.div`
+  background-color: #3c6450;
+  justify-content: center;
+  min-width: 100px;
+  max-width: 200px;
+  flex-grow: 1;
+  overflow-y: scroll;
+  border-left: solid 2px gray;
+`;
 
 async function recognize(worker: Worker, imageLike: Tesseract.ImageLike, onStartJob: (jobId: string) => void, onCompleteJob: (jobId: string, text: string) => void) {
   const workerResult =  await worker.load();
@@ -139,3 +149,6 @@ async function recognize(worker: Worker, imageLike: Tesseract.ImageLike, onStart
     throw {jobId: workerResult.jobId, error: e};
   }
 }
+
+render(<App />, document.getElementById("app"));
+

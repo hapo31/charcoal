@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback } from "react";
 import styled from "styled-components";
 import Loading from "./Loading";
 import ProgressBar from "./ProgressBar";
@@ -7,21 +7,30 @@ type Props = {
   isComplete: boolean;
   progress: number;
   text: string;
-  onClick?: () => void;
+  onClick?: (text: string) => void;
   onMouseEnter?: () => void;
   onMouseLeave?: () => void;
 };
 
-export default (props: Props) => (
-  <Container onClick={props.onClick} onMouseLeave={props.onMouseLeave} onMouseEnter={props.onMouseEnter}>
-    { props.isComplete ? props.text : <>
+export default (props: Props) => {
+  const onClick = useCallback(() => {
+    if (props.onClick == null) {
+      return;
+    }
+
+    props.onClick(props.text);
+  }, [props.text]);
+
+  return <Container onClick={onClick} onMouseLeave={props.onMouseLeave} onMouseEnter={props.onMouseEnter}>
+    { props.isComplete ? <>{props.text}</> : <>
       <Loading />
       <ProgressBar color="#25f" percentOf0To1={props.progress} />
     </>}
   </Container>
-);
+};
 
 const Container = styled.div`
+  user-select: none;
   min-height: 50px;
   font-size: 10px;
   padding: 3px;
@@ -30,6 +39,7 @@ const Container = styled.div`
   box-shadow: 0 0 0 1px #25f;
   margin: 2px 2px 4px 2px;
   :hover {
+    background-color: #56a;
     transition: color .3;
   }
 `;
