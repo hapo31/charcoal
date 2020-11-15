@@ -8,11 +8,10 @@ type Props = {
   rectangles: Rectangle[];
   onLoad: (event: React.ChangeEvent<HTMLImageElement>) => void;
   onClickRect?: (rectIndex: number) => void;
-  onAddRect: (rect: Rectangle, resultImage: ImageData) => void;
+  onAddRect: (rect: Rectangle, resultImage: HTMLCanvasElement) => void;
 };
 
 export default (props: Props) => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [rect, setRect] = useState<Rectangle | null>(null);
@@ -77,10 +76,7 @@ export default (props: Props) => {
     const width = fixedResultRect.right - fixedResultRect.left;
     const height = fixedResultRect.bottom - fixedResultRect.top;
 
-    const canvas = canvasRef.current;
-    if (canvas == null) {
-      return;
-    }
+    const canvas = document.createElement("canvas");
 
     canvas.width = width * scaleFactor;
     canvas.height = height * scaleFactor;
@@ -100,12 +96,12 @@ export default (props: Props) => {
 
     ctx.drawImage(img, fixedResultRect.left * widthRatio, fixedResultRect.top * heightRatio, width * widthRatio, height * heightRatio, 0, 0, width * scaleFactor, height * scaleFactor);
 
-    props.onAddRect(fixedRect, ctx.getImageData(0, 0, canvas.width, canvas.height));
+    props.onAddRect(fixedRect, canvas);
     setIsDragging(false);
     setPos({startX: -1, startY: -1});
     setRect(null);
     console.log({"onMouseUp": fixedRect});
-  }, [isDragging, startResultX, startResultY, canvasRef, imgRef]);
+  }, [isDragging, startResultX, startResultY,   imgRef]);
 
   const createOnClickRect = useCallback((index: number) => {
     return () => {
@@ -131,12 +127,11 @@ export default (props: Props) => {
           width: "100%"
         }} alt=""/>
 
-    {rect ? <Rect position="fixed" {...rect} /> : null}
-    {props.rectangles.map((rect, i) => <Rect position="absolute"
+    {rect ? <Rect color="red" position="fixed" {...rect} /> : null}
+    {props.rectangles.map((rect, i) => <Rect color="red" position="absolute"
                                           key={`rect-${i}`}
                                           {...rect}
                                           onClick={createOnClickRect(i)} />)}
-    <canvas ref={canvasRef} style={{display: "none"}} />
   </Container>
 };
 
@@ -148,17 +143,19 @@ const Container = styled.div`
 
 type RectProps = Partial<Rectangle> & {
   position: "fixed" | "absolute";
+  color: string;
 };
 
-const Rect = styled.div`
-  position: ${({position}: RectProps) => position};
-  left: ${({left}: RectProps) => `${left}px`};
-  top: ${({top}: RectProps) => `${top}px`};
-
-  width:  ${({left, right}: RectProps) => `${(right || 0) - (left || 0)}px`};
-  height:  ${({top, bottom}: RectProps) => `${(bottom || 0) - (top || 0)}px`};
-
-  border: 2px solid red;
+const Rect = styled.div.attrs((props: RectProps) => ({
+  style: {
+    position: props.position,
+    left: `${props.left}px`,
+    top: `${props.top}px`,
+    width: `${(props.right || 0) - (props.left || 0)}px`,
+    height: `${(props.bottom || 0) - (props.top || 0)}px`,
+  }
+}))`
+  border: 2px solid ${({color}: RectProps) => color};
 `;
 
 function fixRect(rect: Rectangle): Rectangle {
