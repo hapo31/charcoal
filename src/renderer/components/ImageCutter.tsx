@@ -57,6 +57,11 @@ export default (props: Props) => {
       return;
     }
     event.preventDefault();
+
+    setIsDragging(false);
+    setPos({startX: -1, startY: -1});
+    setRect(null);
+
     const fixedRect = fixRect({
       left: startX,
       top: startY,
@@ -75,6 +80,10 @@ export default (props: Props) => {
 
     const width = fixedResultRect.right - fixedResultRect.left;
     const height = fixedResultRect.bottom - fixedResultRect.top;
+
+    if (width * height < 100) {
+      return;
+    }
 
     const canvas = document.createElement("canvas");
 
@@ -97,9 +106,7 @@ export default (props: Props) => {
     ctx.drawImage(img, fixedResultRect.left * widthRatio, fixedResultRect.top * heightRatio, width * widthRatio, height * heightRatio, 0, 0, width * scaleFactor, height * scaleFactor);
 
     props.onAddRect(fixedRect, canvas);
-    setIsDragging(false);
-    setPos({startX: -1, startY: -1});
-    setRect(null);
+
     console.log({"onMouseUp": fixedRect});
   }, [isDragging, startResultX, startResultY,   imgRef]);
 
