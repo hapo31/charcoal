@@ -21,9 +21,10 @@ type StyledProps = {
 
 const Container = styled.span`
   display: inline-block;
-  border: 2px solid gray;
+  box-shadow: 0 0 0 2px gray;
   padding: 2px;
-  width: 100%;
+  margin-right: 2px;
+  width: 98%;
   height: 30px;
 `;
 
