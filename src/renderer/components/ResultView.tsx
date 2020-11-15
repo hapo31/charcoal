@@ -8,10 +8,12 @@ type Props = {
   progress: number;
   text: string;
   onClick?: () => void;
+  onMouseEnter?: () => void;
+  onMouseLeave?: () => void;
 };
 
 export default (props: Props) => (
-  <Container onClick={props.onClick}>
+  <Container onClick={props.onClick} onMouseLeave={props.onMouseLeave} onMouseEnter={props.onMouseEnter}>
     { props.isComplete ? props.text : <>
       <Loading />
       <ProgressBar color="#25f" percentOf0To1={props.progress} />

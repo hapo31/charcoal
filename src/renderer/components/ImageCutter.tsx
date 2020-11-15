@@ -6,6 +6,7 @@ import Rectangle from "../../domain/Recrangle";
 type Props = {
   src: string;
   rectangles: Rectangle[];
+  showRectangleIndex: number;
   onLoad: (event: React.ChangeEvent<HTMLImageElement>) => void;
   onClickRect?: (rectIndex: number) => void;
   onAddRect: (rect: Rectangle, resultImage: HTMLCanvasElement) => void;
@@ -135,10 +136,11 @@ export default (props: Props) => {
         }} alt=""/>
 
     {rect ? <Rect color="red" position="fixed" {...rect} /> : null}
-    {props.rectangles.map((rect, i) => <Rect color="red" position="absolute"
-                                          key={`rect-${i}`}
-                                          {...rect}
-                                          onClick={createOnClickRect(i)} />)}
+    {props.rectangles.map((rect, i) => i === props.showRectangleIndex ?
+      <Rect color="red" position="absolute"
+        key={`rect-${i}`}
+        {...rect}
+        onClick={createOnClickRect(i)} /> : null)}
   </Container>
 };
 

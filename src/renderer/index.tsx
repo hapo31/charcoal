@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useState } from "react";
 import styled from "styled-components";
 import { render } from "react-dom";
 import { ipcRenderer } from "electron";
@@ -37,6 +37,9 @@ const ResultContainer = styled.div`
 `;
 
 const App = () => {
+
+  const [showRectIndex, setShowRectIndex] = useState(-1);
+
   const [state, dispatch] = useAppReducer({
     imageSrc: null,
     rectangles: [],
@@ -56,7 +59,6 @@ const App = () => {
     }
     dispatch(ImageLoaded(file.path));
   }, []);
-
 
   const onClick = useCallback(async () => {
     const path: string | null = await ipcRenderer.invoke("fileopen-dialog");
@@ -95,6 +97,7 @@ const App = () => {
             ここにドロップ
           </DnDArea> :
           <ImageCutter
+            showRectangleIndex={showRectIndex}
             src={state.imageSrc}
             onLoad={onImageLoad}
             onAddRect={onAddRect}
@@ -105,6 +108,12 @@ const App = () => {
       <p style={{textAlign: "center"}}>結果</p>
       {state.ocrResults.map((result, i) => (
       <ResultView
+        onMouseEnter={()=>{
+          setShowRectIndex(i);
+        }}
+        onMouseLeave={()=>{
+          setShowRectIndex(-1);
+        }}
         isComplete={result.isCompleted}
         progress={result.progress}
         text={result.text}
