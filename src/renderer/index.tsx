@@ -18,8 +18,8 @@ type LoggerResult = {
 };
 
 const App = () => {
-
   const [showRectIndex, setShowRectIndex] = useState(-1);
+  const [showCopied, setShowCompied] = useState(-1);
 
   const [state, dispatch] = useAppReducer({
     imageSrc: null,
@@ -70,43 +70,61 @@ const App = () => {
     });
   }, []);
 
-  return <RootContainer>
-    <ImageContainer>
-      {
-        state.imageSrc == null ?
-          <DnDArea onClick={onClick} onDrop={onDrop}>
-            ここにドロップ
-          </DnDArea> :
-          <ImageCutter
-            showRectangleIndex={showRectIndex}
-            src={state.imageSrc}
-            onLoad={onImageLoad}
-            onAddRect={onAddRect}
-            rectangles={state.rectangles} />
-      }
-    </ImageContainer>
-    <ResultContainer>
-      <ResultTitle>結果</ResultTitle>
-      {state.ocrResults.map((result, i) => (
-      <ResultView
-        onClick={text => {
-          ipcRenderer.invoke("set-text-clipboard", text);
-        }}
-        onMouseEnter={()=>{
-          setShowRectIndex(i);
-        }}
-        onMouseLeave={()=>{
-          setShowRectIndex(-1);
-        }}
-        isComplete={result.isCompleted}
-        progress={result.progress}
-        text={result.text}
-        key={i} />))}
-    </ResultContainer>
-  </RootContainer>
+  return <>
+    <RootContainer>
+      <ImageContainer>
+        {
+          state.imageSrc == null ?
+            <DnDArea onClick={onClick} onDrop={onDrop}>
+              ここにドロップ
+            </DnDArea> :
+            <ImageCutter
+              showRectangleIndex={showRectIndex}
+              src={state.imageSrc}
+              onLoad={onImageLoad}
+              onAddRect={onAddRect}
+              rectangles={state.rectangles} />
+        }
+      </ImageContainer>
+      <ResultContainer>
+        <ResultTitle>結果</ResultTitle>
+        {state.ocrResults.map((result, i) => (
+        <>
+          <ResultView
+            onClick={text => {
+              ipcRenderer.invoke("set-text-clipboard", text);
+              setShowCompied(i);
+              setTimeout(()=>{
+                setShowCompied(-1);
+              }, 1000);
+            }}
+            onMouseEnter={()=>{
+              setShowRectIndex(i);
+            }}
+            onMouseLeave={()=>{
+              setShowRectIndex(-1);
+            }}
+            isComplete={result.isCompleted}
+            progress={result.progress}
+            text={result.text}
+            key={`result-${i}`} />
+          {showCopied === i ? <Overray key={`overray-${i}`}>
+            コピーしました
+          </Overray> : null}
+        </>
+          ))}
+      </ResultContainer>
+    </RootContainer>
+    <HowTo>
+      <h2>
+        使い方
+      </h2>
+    </HowTo>
+  </>
 };
 
-const RootContainer = styled.div`
+const RootContainer = styled.main`
+  background-color: #333;
   display: flex;
   height: 99vh;
   width: 100%;
@@ -119,19 +137,32 @@ const ImageContainer = styled.div`
 const ResultTitle = styled.h2`
   margin-top: 3px;
   font-size: 15px;
-  color: white;
+  color: #777;
   font-weight: bold;
   text-align: center;
 `;
 
 const ResultContainer = styled.div`
-  background-color: #3c6450;
+  background-color: #efefef;
   justify-content: center;
   min-width: 100px;
   max-width: 200px;
   flex-grow: 1;
   overflow-y: scroll;
-  border-left: solid 2px gray;
+`;
+
+const Overray = styled.div`
+  user-select: none;
+  background-color: rgba(128, 128, 128, 0.3);
+  color: white;
+  font-weight: bold;
+  text-align: center;
+  width: 100%;
+  margin-top: -15%;
+`;
+
+const HowTo = styled.article`
+  color: #fefefe;
 `;
 
 async function recognize(worker: Worker, imageLike: Tesseract.ImageLike, onStartJob: (jobId: string) => void, onCompleteJob: (jobId: string, text: string) => void) {
