@@ -1,14 +1,13 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import styled from "styled-components";
-import { render } from "react-dom";
-import { ipcRenderer } from "electron";
 import { createWorker, Worker } from "tesseract.js";
+import copy from "clipboard-copy";
 
-import { useAppReducer, AddRect, ImageLoaded, StartJob, UpdateProgress, JobComplete, JobError } from "./reducer/useAppReducer";
-import DnDArea from "./components/DnDArea";
-import ImageCutter from "./components/ImageCutter";
+import { useAppReducer, AddRect, ImageLoaded, StartJob, UpdateProgress, JobComplete, JobError } from "../reducer/useAppReducer";
+import DnDArea from "../components/DnDArea";
+import ImageCutter from "../components/ImageCutter";
 import Rectangle from "../domain/Recrangle";
-import ResultView from "./components/ResultView";
+import ResultView from "../components/ResultView";
 
 type LoggerResult = {
   workerId: string;
@@ -17,9 +16,10 @@ type LoggerResult = {
   progress: number;
 };
 
-const App = () => {
+export default () => {
   const [showRectIndex, setShowRectIndex] = useState(-1);
   const [showCopied, setShowCompied] = useState(-1);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const [state, dispatch] = useAppReducer({
     imageSrc: null,
@@ -27,9 +27,25 @@ const App = () => {
     ocrResults: []
   });
 
+  const onChangeFile = useCallback((event: React.ChangeEvent) => {
+    const input = inputRef.current;
+    if(input == null || input.files == null) {
+      return;
+    }
+
+    const file = input.files[0];
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      dispatch(ImageLoaded(reader.result as string));
+    }
+
+    reader.readAsDataURL(file);
+
+  }, []);
+
   const onImageLoad = useCallback(async (event: React.ChangeEvent<HTMLImageElement>) => {
     const {width, height} = event.target;
-    // await ipcRenderer.invoke("set-window-size", width, height);
   }, []);
 
   const onDrop = useCallback(async (event: React.DragEvent) => {
@@ -38,16 +54,21 @@ const App = () => {
     if (file == null) {
       return;
     }
-    dispatch(ImageLoaded(file.path));
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      dispatch(ImageLoaded(reader.result as string));
+    }
+
+    reader.readAsDataURL(file);
   }, []);
 
   const onClick = useCallback(async () => {
-    const path: string | null = await ipcRenderer.invoke("fileopen-dialog");
-    if (!path) {
+    const input = inputRef.current;
+    if(input == null) {
       return;
     }
-
-    dispatch(ImageLoaded(path));
+    input.click();
   },[]);
 
   const onAddRect = useCallback(async (rect: Rectangle, resultImage: HTMLCanvasElement) => {
@@ -75,9 +96,12 @@ const App = () => {
       <ImageContainer>
         {
           state.imageSrc == null ?
-            <DnDArea onClick={onClick} onDrop={onDrop}>
-              ここにドロップ
-            </DnDArea> :
+            <>
+              <DnDArea onClick={onClick} onDrop={onDrop}>
+                ここにドロップ
+              </DnDArea>
+              <Input ref={inputRef} onChange={onChangeFile} />
+            </>:
             <ImageCutter
               showRectangleIndex={showRectIndex}
               src={state.imageSrc}
@@ -92,7 +116,7 @@ const App = () => {
         <>
           <ResultView
             onClick={text => {
-              ipcRenderer.invoke("set-text-clipboard", text);
+              copy(text);
               setShowCompied(i);
               setTimeout(()=>{
                 setShowCompied(-1);
@@ -128,6 +152,13 @@ const RootContainer = styled.main`
   display: flex;
   height: 99vh;
   width: 100%;
+`;
+
+const Input = styled.input.attrs(()=>({
+  type: "file",
+  accept: "image/*"
+}))`
+  display: none;
 `;
 
 const ImageContainer = styled.div`
@@ -180,6 +211,3 @@ async function recognize(worker: Worker, imageLike: Tesseract.ImageLike, onStart
     throw {jobId: workerResult.jobId, error: e};
   }
 }
-
-render(<App />, document.getElementById("app"));
-

@@ -1,6 +1,6 @@
 import React, { useCallback, useRef, useState } from "react";
 import styled from "styled-components";
-import Rectangle from "../../domain/Recrangle";
+import Rectangle from "../domain/Recrangle";
 
 
 type Props = {

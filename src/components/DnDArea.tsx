@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import styled from "styled-components";
 
 type Props = {
@@ -9,6 +9,7 @@ type Props = {
 
 export default (props: Props) => {
   const [isDragover, setDragover] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const onDrop = useCallback((event: React.DragEvent) => {
     event.preventDefault();
@@ -35,6 +36,7 @@ export default (props: Props) => {
             onDragOver={onDragOver}
             onDragLeave={onDragLeave}
             onDrop={onDrop} >
+
     {props.children}
   </Container>
 }

@@ -1,5 +1,5 @@
 import { useReducer } from "react";
-import Rectangle from "../../domain/Recrangle";
+import Rectangle from "../domain/Recrangle";
 
 type OCRResult = {
   text: string;
