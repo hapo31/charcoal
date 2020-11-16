@@ -6,8 +6,8 @@
   "scripts": {
     "dev": "webpack-dev-server --watch --config ./webpack.config.js",
     "build": "cross-env NODE_ENV=production webpack --config ./webpack.config.js",
-    "prepublish": "npm run dev",
-    "publish": "gh-pages -d dist/"
+    "predeploy": "npm run dev",
+    "deploy": "gh-pages -d dist/"
   },
   "devDependencies": {
     "@types/react": "^16.9.56",
