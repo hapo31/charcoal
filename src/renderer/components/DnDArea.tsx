@@ -40,13 +40,13 @@ export default (props: Props) => {
 }
 
 const Container = styled.div`
-  height: 100%;
+  height: 99%;
   display: flex;
   justify-content: center;
   align-items: center;
   border: dashed 3px gray;
   border-radius: 30px;
+  -webkit-text-stroke: 1px white;
 
   background-color: ${({isDragover}: {isDragover: boolean}) => isDragover ? "rgba(200,200,200, 0.3)": "inherit"};
-  
 `;
