@@ -98,7 +98,7 @@ export default () => {
           state.imageSrc == null ?
             <>
               <DnDArea onClick={onClick} onDrop={onDrop}>
-                ここにドロップ
+                ここをクリックして画像を選択
               </DnDArea>
               <Input ref={inputRef} onChange={onChangeFile} />
             </>:
@@ -152,6 +152,10 @@ const RootContainer = styled.main`
   display: flex;
   height: 99vh;
   width: 100%;
+  @media (max-width: 768px) {
+    display: block;
+    height: auto;
+  }
 `;
 
 const Input = styled.input.attrs(()=>({
@@ -162,7 +166,13 @@ const Input = styled.input.attrs(()=>({
 `;
 
 const ImageContainer = styled.div`
+  height: 80%;
   flex: 5 1;
+  @media (max-width: 768px) {
+    height: 60vh;
+    width: 100%;
+    flex: initial;
+  }
 `;
 
 const ResultTitle = styled.h2`
@@ -171,6 +181,9 @@ const ResultTitle = styled.h2`
   color: #777;
   font-weight: bold;
   text-align: center;
+  @media (max-width: 768px) {
+    height: 30vh;
+  }
 `;
 
 const ResultContainer = styled.div`
@@ -180,6 +193,13 @@ const ResultContainer = styled.div`
   max-width: 200px;
   flex-grow: 1;
   overflow-y: scroll;
+  @media (max-width: 768px) {
+    flex: initial;
+    max-width: 100%;
+    min-width: 0px;
+    width: 100%;
+    height: 20%;
+  }
 `;
 
 const Overray = styled.div`
