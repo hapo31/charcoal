@@ -9,7 +9,6 @@ type Props = {
 
 export default (props: Props) => {
   const [isDragover, setDragover] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
 
   const onDrop = useCallback((event: React.DragEvent) => {
     event.preventDefault();
