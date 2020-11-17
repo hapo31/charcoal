@@ -181,9 +181,6 @@ const ResultTitle = styled.h2`
   color: #777;
   font-weight: bold;
   text-align: center;
-  @media (max-width: 768px) {
-    height: 30vh;
-  }
 `;
 
 const ResultContainer = styled.div`
@@ -210,6 +207,11 @@ const Overray = styled.div`
   text-align: center;
   width: 100%;
   margin-top: -15%;
+  @media (max-width: 768px) {
+    margin-top: 0px;
+    display: fixed;
+    bottom: 0;
+  }
 `;
 
 const HowTo = styled.article`
