@@ -20,47 +20,56 @@ export default (props: Props) => {
   const [{startX, startY}, setPos] = useState({ startX: -1, startY: -1 });
   const [{startResultX, startResultY}, setResult] = useState({ startResultX: -1, startResultY: -1 });
 
-  const onMouseDown = useCallback((event: React.MouseEvent) => {
+  const onMouseDown = useCallback((event: React.MouseEvent | React.TouchEvent) => {
     const div = event.target as HTMLDivElement;
-    event.preventDefault();
+    const { pageX, pageY, clientX, clientY } = positionExtract(event);
+    if(!isTouchEvent(event)) {
+      event.preventDefault();
+    }
     setPos({
-      startX: event.pageX,
-      startY: event.pageY
+      startX: pageX,
+      startY: pageY
     });
     setRect({
-      left: event.clientX,
-      top: event.clientY,
-      right: event.clientX,
-      bottom: event.clientY,
+      left: clientX,
+      top: clientY,
+      right: clientX,
+      bottom: clientY,
     });
     setResult({
-      startResultX: event.pageX,
-      startResultY: event.pageY + div.scrollTop
+      startResultX: pageX,
+      startResultY: pageY + div.scrollTop
     });
     setIsDragging(true);
     console.log("onMouseDown");
   }, []);
 
-  const onMouseMove = useCallback((event: React.MouseEvent) => {
+  const onMouseMove = useCallback((event: React.MouseEvent | React.TouchEvent) => {
     if (!isDragging || !rect) {
       return;
     }
-    event.preventDefault();
+    const { clientX, clientY } = positionExtract(event);
+    if(!isTouchEvent(event)) {
+      event.preventDefault();
+    }
     const fixedRect = fixRect({
       left: rect.left,
       top: rect.top,
-      right: event.clientX,
-      bottom: event.clientY
+      right: clientX,
+      bottom: clientY
     });
     setRect(fixedRect);
   }, [isDragging, rect]);
 
-  const onMouseUp = useCallback((event: React.MouseEvent) => {
+  const onMouseUp = useCallback((event: React.MouseEvent | React.TouchEvent) => {
     const div = event.target as HTMLDivElement;
     if (!isDragging) {
       return;
     }
-    event.preventDefault();
+    const { pageX, pageY } = positionExtract(event);
+    if(!isTouchEvent(event)) {
+      event.preventDefault();
+    }
 
     setIsDragging(false);
     setPos({startX: -1, startY: -1});
@@ -69,8 +78,8 @@ export default (props: Props) => {
     const fixedRect = fixRect({
       left: startX,
       top: startY,
-      right: event.pageX,
-      bottom: event.pageY
+      right: pageX,
+      bottom: pageY
     });
 
     const scaleFactor = window.devicePixelRatio;
@@ -78,8 +87,8 @@ export default (props: Props) => {
     const fixedResultRect = fixRect({
       left: startResultX,
       top: startResultY,
-      right: event.pageX,
-      bottom: event.pageY + div.scrollTop
+      right: pageX,
+      bottom: pageY + div.scrollTop
     });
 
     const width = fixedResultRect.right - fixedResultRect.left;
@@ -128,6 +137,9 @@ export default (props: Props) => {
             onMouseDown={onMouseDown}
             onMouseMove={onMouseMove}
             onMouseUp={onMouseUp}
+            onTouchStart={onMouseDown}
+            onTouchMove={onMouseMove}
+            onTouchEnd={onMouseUp}
             // onMouseLeave={onMouseUp} // マウスが要素外に出たとき、mouseUpと同じ処理をする
           >
     <img src={props.src}
@@ -187,4 +199,38 @@ function fixRect(rect: Rectangle): Rectangle {
   return {
     left, top, right, bottom
   }
+}
+
+function positionExtract(event: React.MouseEvent | React.TouchEvent) {
+  if (isTouchEvent(event)) {
+    const touch = event.touches.item(0);
+    if (touch != null) {
+      return {
+        clientX: touch.clientX,
+        clientY: touch.clientY,
+        pageX: touch.pageX,
+        pageY: touch.pageY
+      }
+    } else {
+      const changeTouch = event.changedTouches.item(0);
+      return {
+        clientX: changeTouch.clientX,
+        clientY: changeTouch.clientY,
+        pageX: changeTouch.pageX,
+        pageY: changeTouch.pageY
+      }
+    }
+  } else {
+    return {
+      clientX: event.clientX,
+      clientY: event.clientY,
+      pageX: event.pageX,
+      pageY: event.pageY
+    }
+  }
+}
+
+
+function isTouchEvent(event: React.MouseEvent | React.TouchEvent): event is React.TouchEvent {
+  return "touches" in event;
 }
