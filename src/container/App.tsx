@@ -17,8 +17,10 @@ type LoggerResult = {
 };
 
 export default () => {
+  const [timer, setTimer] = useState(-1);
   const [showRectIndex, setShowRectIndex] = useState(-1);
   const [showCopied, setShowCompied] = useState(-1);
+  const [{imgWidth, imgHeight}, setImageViewport] = useState({imgWidth: -1, imgHeight: -1});
   const inputRef = useRef<HTMLInputElement>(null);
 
   const [state, dispatch] = useAppReducer({
@@ -46,6 +48,7 @@ export default () => {
 
   const onImageLoad = useCallback(async (event: React.ChangeEvent<HTMLImageElement>) => {
     const {width, height} = event.target;
+    setImageViewport({imgWidth: width, imgHeight: height});
   }, []);
 
   const onDrop = useCallback(async (event: React.DragEvent) => {
@@ -93,7 +96,7 @@ export default () => {
 
   return <>
     <RootContainer>
-      <ImageContainer>
+      <ImageContainer height={imgHeight}>
         {
           state.imageSrc == null ?
             <>
@@ -112,15 +115,18 @@ export default () => {
       </ImageContainer>
       <ResultContainer>
         <ResultTitle>結果</ResultTitle>
-        {state.ocrResults.map((result, i) => (
-        <>
+        {state.ocrResults.map((result, i) => (<>
           <ResultView
             onClick={text => {
+              if (timer !== -1) {
+                clearTimeout(timer);
+              }
               copy(text);
               setShowCompied(i);
-              setTimeout(()=>{
+              setTimer(setTimeout(()=>{
                 setShowCompied(-1);
-              }, 1000);
+                setTimer(-1);
+              }, 1000));
             }}
             onMouseEnter={()=>{
               setShowRectIndex(i);
@@ -135,14 +141,40 @@ export default () => {
           {showCopied === i ? <Overray key={`overray-${i}`}>
             コピーしました
           </Overray> : null}
-        </>
-          ))}
+        </>))}
       </ResultContainer>
     </RootContainer>
     <HowTo>
       <h2>
         使い方
       </h2>
+      <h3>
+        概要
+      </h3>
+      <p>
+        画像を読み込み、範囲を指定した場所の文字を読み取って文章データ化します。
+        読み取った文章は、結果が表示されている部分をクリックするとコピペ出来ます。
+      </p>
+      <p>
+        文字は、あらかじめ正しい向きになるようにしておいてください。現在、左回転や右回転、上下逆だと読み取れません。
+      </p>
+      <p>
+        また、文字が上手く読み取れないときは画像サイズを工夫したり、一度に読み取る範囲を小さくすると上手く行くかもしれません。
+      </p>
+      <h3>
+        手順
+      </h3>
+      <ul>
+        <li>
+          「ここをクリックして画像を選択」を押して画像を選ぶ（PCの場合はドラッグアンドドロップでもOK）
+        </li>
+        <li>
+            画像が表示されたら、読み取る範囲をタッチやドラッグアンドドロップで選択
+        </li>
+        <li>
+            しばらくすると、「結果」という欄に読み取り結果が出てきます（どの範囲を読み取ったかは、マウスを重ねたり一度タップすると赤い四角形が描画されて分かるようになります）
+        </li>
+      </ul>
     </HowTo>
   </>
 };
@@ -166,7 +198,8 @@ const Input = styled.input.attrs(()=>({
 `;
 
 const ImageContainer = styled.div`
-  height: 80%;
+  height: ${({height}: {height: number}) => height !== -1 ? `${height}px` : "100%"};
+  max-height: 80%;
   flex: 5 1;
   @media (max-width: 768px) {
     height: 60vh;
@@ -208,8 +241,13 @@ const Overray = styled.div`
   width: 100%;
   margin-top: -15%;
   @media (max-width: 768px) {
-    margin-top: 0px;
-    display: fixed;
+    background-color: rgba(200, 200, 200, 1.0);
+    color: #777;
+    font-size: 27px;
+    height: 30px;
+    margin-top: 0;
+    padding-bottom: 10px;
+    position: fixed;
     bottom: 0;
   }
 `;
