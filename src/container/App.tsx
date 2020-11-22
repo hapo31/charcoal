@@ -96,7 +96,7 @@ export default () => {
 
   return <>
     <RootContainer>
-      <ImageContainer height={imgHeight}>
+      <ImageContainer>
         {
           state.imageSrc == null ?
             <>
@@ -182,7 +182,7 @@ export default () => {
 const RootContainer = styled.main`
   background-color: #333;
   display: flex;
-  height: 99vh;
+  height: 92vh;
   width: 100%;
   @media (max-width: 768px) {
     display: block;
@@ -198,8 +198,7 @@ const Input = styled.input.attrs(()=>({
 `;
 
 const ImageContainer = styled.div`
-  height: ${({height}: {height: number}) => height !== -1 ? `${height}px` : "100%"};
-  max-height: 80%;
+  height: 100%;
   flex: 5 1;
   @media (max-width: 768px) {
     height: 60vh;
@@ -240,6 +239,7 @@ const Overray = styled.div`
   text-align: center;
   width: 100%;
   margin-top: -15%;
+  margin-bottom: 4px;
   @media (max-width: 768px) {
     background-color: rgba(200, 200, 200, 1.0);
     color: #777;
