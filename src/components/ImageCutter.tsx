@@ -16,25 +16,25 @@ export default (props: Props) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const [rect, setRect] = useState<Rectangle | null>(null);
-  const [{startX, startY}, setPos] = useState({ startX: -1, startY: -1 });
+  const [previewRect, setPreviewRect] = useState<Rectangle | null>(null);
+  const [{startX, startY}, setStartPos] = useState({ startX: -1, startY: -1 });
   const [{startResultX, startResultY}, setResult] = useState({ startResultX: -1, startResultY: -1 });
 
   const onMouseDown = useCallback((event: React.MouseEvent | React.TouchEvent) => {
     const div = event.target as HTMLDivElement;
-    const { pageX, pageY, clientX, clientY } = positionExtract(event);
+    const { pageX, pageY } = positionExtract(event);
     if(!isTouchEvent(event)) {
       event.preventDefault();
     }
-    setPos({
+    setStartPos({
       startX: pageX,
       startY: pageY
     });
-    setRect({
-      left: clientX,
-      top: clientY,
-      right: clientX,
-      bottom: clientY,
+    setPreviewRect({
+      left: pageX,
+      top: pageY,
+      right: pageX,
+      bottom: pageY,
     });
     setResult({
       startResultX: pageX,
@@ -45,21 +45,21 @@ export default (props: Props) => {
   }, []);
 
   const onMouseMove = useCallback((event: React.MouseEvent | React.TouchEvent) => {
-    if (!isDragging || !rect) {
+    if (!isDragging || !previewRect) {
       return;
     }
-    const { clientX, clientY } = positionExtract(event);
+    const { pageX, pageY } = positionExtract(event);
     if(!isTouchEvent(event)) {
       event.preventDefault();
     }
     const fixedRect = fixRect({
-      left: rect.left,
-      top: rect.top,
-      right: clientX,
-      bottom: clientY
+      left: startX,
+      top: startY,
+      right: pageX,
+      bottom: pageY
     });
-    setRect(fixedRect);
-  }, [isDragging, rect]);
+    setPreviewRect(fixedRect);
+  }, [isDragging, previewRect]);
 
   const onMouseUp = useCallback((event: React.MouseEvent | React.TouchEvent) => {
     const div = event.target as HTMLDivElement;
@@ -72,8 +72,8 @@ export default (props: Props) => {
     }
 
     setIsDragging(false);
-    setPos({startX: -1, startY: -1});
-    setRect(null);
+    setStartPos({startX: -1, startY: -1});
+    setPreviewRect(null);
 
     const fixedRect = fixRect({
       left: startX,
@@ -151,7 +151,7 @@ export default (props: Props) => {
           width: "100%"
         }} alt=""/>
 
-    {rect ? <Rect color="red" position="fixed" {...rect} /> : null}
+    {previewRect ? <Rect color="red" position="absolute" {...previewRect} /> : null}
     {props.rectangles.map((rect, i) => i === props.showRectangleIndex ?
       <Rect color="red" position="absolute"
         key={`rect-${i}`}
