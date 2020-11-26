@@ -40,6 +40,10 @@ var renderer = {
           from: path.resolve(__dirname, "src", "index.html"),
           to: path.resolve(__dirname, outputPath),
         },
+        {
+          from: path.resolve(__dirname, "node_modules", "pdfjs-dist", "build", "pdf.worker.min.js"),
+          to: path.resolve(__dirname, outputPath),
+        }
       ],
     }),
   ],
