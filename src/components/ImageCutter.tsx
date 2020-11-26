@@ -1,9 +1,11 @@
-import React, { useCallback, useRef, useState } from "react";
+import React, { RefObject, useCallback, useRef, useState } from "react";
 import styled from "styled-components";
 import Rectangle from "../domain/Recrangle";
+import PDFView from "../components/PDFView";
 
 
 type Props = {
+  fileType: "image" | "pdf";
   src: string;
   rectangles: Rectangle[];
   showRectangleIndex: number;
@@ -14,7 +16,7 @@ type Props = {
 
 export default (props: Props) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const imgRef = useRef<HTMLImageElement>(null);
+  const drawableRef = useRef<HTMLImageElement | HTMLCanvasElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [previewRect, setPreviewRect] = useState<Rectangle | null>(null);
   const [{startX, startY}, setStartPos] = useState({ startX: -1, startY: -1 });
@@ -108,20 +110,26 @@ export default (props: Props) => {
       return;
     }
 
-    const img = imgRef.current;
-    if (img == null) {
+    const drawable = drawableRef.current;
+    if (drawable == null) {
       return;
     }
 
-    const widthRatio = img.naturalWidth / img.width;
-    const heightRatio = img.naturalHeight / img.height;
+    if (isImageElement(props.fileType, drawable)) {
+      const img: HTMLImageElement = drawable;
+      const widthRatio = img.naturalWidth / img.width;
+      const heightRatio = img.naturalHeight / img.height;
+      ctx.drawImage(img, fixedResultRect.left * widthRatio, fixedResultRect.top * heightRatio, width * widthRatio, height * heightRatio, 0, 0, width * scaleFactor, height * scaleFactor);
+    } else {
+      const canvas: HTMLCanvasElement = drawable;
+      ctx.drawImage(canvas, fixedResultRect.left, fixedResultRect.top, width, height, 0, 0, width * scaleFactor, height * scaleFactor);
+    }
 
-    ctx.drawImage(img, fixedResultRect.left * widthRatio, fixedResultRect.top * heightRatio, width * widthRatio, height * heightRatio, 0, 0, width * scaleFactor, height * scaleFactor);
 
     props.onAddRect(fixedRect, canvas);
 
     console.log({"onMouseUp": fixedRect});
-  }, [isDragging, startResultX, startResultY,   imgRef]);
+  }, [isDragging, startResultX, startResultY,   drawableRef]);
 
   const createOnClickRect = useCallback((index: number) => {
     return () => {
@@ -141,15 +149,17 @@ export default (props: Props) => {
             onTouchMove={onMouseMove}
             onTouchEnd={onMouseUp}
             // onMouseLeave={onMouseUp} // マウスが要素外に出たとき、mouseUpと同じ処理をする
-          >
-    <img src={props.src}
-        ref={imgRef}
+  >
+    {props.fileType === "image" ?
+      <img src={props.src}
+        ref={drawableRef as RefObject<HTMLImageElement>}
         onLoad={props.onLoad}
         style={{
           float: "left",
           display: "inline-block",
           width: "100%"
-        }} alt=""/>
+        }} alt=""/> : <PDFView src={props.src} page={1} ref={drawableRef as RefObject<HTMLCanvasElement>} /> }
+
 
     {previewRect ? <Rect color="red" position="fixed" {...previewRect} /> : null}
     {props.rectangles.map((rect, i) => i === props.showRectangleIndex ?
@@ -236,4 +246,8 @@ function positionExtract(event: React.MouseEvent | React.TouchEvent) {
 
 function isTouchEvent(event: React.MouseEvent | React.TouchEvent): event is React.TouchEvent {
   return "touches" in event;
+}
+
+function isImageElement(type: "image" | "pdf", drawable: HTMLImageElement | HTMLCanvasElement): drawable is HTMLImageElement {
+  return type === "image";
 }
