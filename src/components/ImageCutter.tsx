@@ -22,7 +22,7 @@ export default (props: Props) => {
 
   const onMouseDown = useCallback((event: React.MouseEvent | React.TouchEvent) => {
     const div = event.target as HTMLDivElement;
-    const { pageX, pageY } = positionExtract(event);
+    const { pageX, pageY, clientX, clientY } = positionExtract(event);
     if(!isTouchEvent(event)) {
       event.preventDefault();
     }
@@ -31,10 +31,10 @@ export default (props: Props) => {
       startY: pageY
     });
     setPreviewRect({
-      left: pageX,
-      top: pageY,
-      right: pageX,
-      bottom: pageY,
+      left: clientX,
+      top: clientY,
+      right: clientX,
+      bottom: clientY,
     });
     setResult({
       startResultX: pageX,
@@ -48,15 +48,15 @@ export default (props: Props) => {
     if (!isDragging || !previewRect) {
       return;
     }
-    const { pageX, pageY } = positionExtract(event);
+    const { clientX, clientY } = positionExtract(event);
     if(!isTouchEvent(event)) {
       event.preventDefault();
     }
     const fixedRect = fixRect({
-      left: startX,
-      top: startY,
-      right: pageX,
-      bottom: pageY
+      left: previewRect.left,
+      top: previewRect.top,
+      right: clientX,
+      bottom: clientY
     });
     setPreviewRect(fixedRect);
   }, [isDragging, previewRect]);
@@ -151,7 +151,7 @@ export default (props: Props) => {
           width: "100%"
         }} alt=""/>
 
-    {previewRect ? <Rect color="red" position="absolute" {...previewRect} /> : null}
+    {previewRect ? <Rect color="red" position="fixed" {...previewRect} /> : null}
     {props.rectangles.map((rect, i) => i === props.showRectangleIndex ?
       <Rect color="red" position="absolute"
         key={`rect-${i}`}
