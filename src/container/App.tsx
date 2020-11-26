@@ -20,7 +20,7 @@ export default () => {
   const [timer, setTimer] = useState(-1);
   const [showRectIndex, setShowRectIndex] = useState(-1);
   const [showCopied, setShowCompied] = useState(-1);
-  const [{imgWidth, imgHeight}, setImageViewport] = useState({imgWidth: -1, imgHeight: -1});
+  const [fileType, setFileType] = useState<"image" | "pdf">("image");
   const inputRef = useRef<HTMLInputElement>(null);
 
   const [state, dispatch] = useAppReducer({
@@ -30,12 +30,17 @@ export default () => {
   });
 
   const onChangeFile = useCallback((event: React.ChangeEvent) => {
-    const input = inputRef.current;
+    const input = event.target as HTMLInputElement;
     if(input == null || input.files == null) {
       return;
     }
 
     const file = input.files[0];
+    if (file.type.indexOf("image") >= 0) {
+      setFileType("image");
+    } else if (file.type.indexOf("pdf") >= 0) {
+      setFileType("pdf");
+    }
     const reader = new FileReader();
 
     reader.onload = () => {
@@ -43,12 +48,10 @@ export default () => {
     }
 
     reader.readAsDataURL(file);
-
   }, []);
 
   const onImageLoad = useCallback(async (event: React.ChangeEvent<HTMLImageElement>) => {
     const {width, height} = event.target;
-    setImageViewport({imgWidth: width, imgHeight: height});
   }, []);
 
   const onDrop = useCallback(async (event: React.DragEvent) => {
@@ -71,6 +74,7 @@ export default () => {
     if(input == null) {
       return;
     }
+    input.accept = "image/*,.pdf";
     input.click();
   },[]);
 
@@ -104,8 +108,8 @@ export default () => {
                 ここをクリックして画像を選択
               </DnDArea>
               <Input ref={inputRef} onChange={onChangeFile} />
-            </>:
-            <ImageCutter
+            </> : <ImageCutter
+              fileType={fileType}
               showRectangleIndex={showRectIndex}
               src={state.imageSrc}
               onLoad={onImageLoad}
