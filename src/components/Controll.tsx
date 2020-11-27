@@ -4,7 +4,7 @@ import styled from "styled-components";
 type Props = {
   pageNum: number;
   maxPage: number;
-  disabled: boolean;
+  disabled?: boolean;
   onClickPlusButton: (nextValue: number) => void;
   onClickMinusButton: (nextValue: number) => void;
   onChangePage: (value: number) => void;

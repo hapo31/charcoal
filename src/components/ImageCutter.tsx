@@ -18,8 +18,7 @@ type Props = {
 
 export default (props: Props) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const drawableRef = useRef<HTMLImageElement | HTMLCanvasElement>(null);
-  const [isPDFPageLoading, setIsPDFPageLoading] = useState(false);
+  const drawableRef = useRef<HTMLImageElement>(null);
   const [page, setPage] = useState(1);
   const [maxPage, setMaxPage] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
@@ -150,11 +149,9 @@ export default (props: Props) => {
   }, []);
 
   const onLoadPDFPageBegin = useCallback(() => {
-    setIsPDFPageLoading(true);
   }, []);
 
   const onLoadPDFPage = useCallback(() => {
-    setIsPDFPageLoading(false);
   }, []);
 
   const onClickPlus = useCallback((value: number) => {
@@ -177,7 +174,6 @@ export default (props: Props) => {
   return <Container>
       {props.fileType === "pdf" ?
         <Controll
-          disabled={isPDFPageLoading}
           pageNum={page}
           maxPage={maxPage}
           onChangePage={onChangePage}
@@ -185,7 +181,6 @@ export default (props: Props) => {
           onClickMinusButton={onClickMinus} /> : null}
       <MediaPreviewContainer
         ref={containerRef}
-        scroll={!isPDFPageLoading}
         onMouseDown={onMouseDown}
         onMouseMove={onMouseMove}
         onMouseUp={onMouseUp}
@@ -196,13 +191,13 @@ export default (props: Props) => {
     >
       {props.fileType === "image" ?
         <img src={props.src}
-          ref={drawableRef as RefObject<HTMLImageElement>}
+          ref={drawableRef}
           onLoad={props.onLoad}
           style={{
             display: "inline-block",
             width: "100%"
           }} alt=""/> : <PDFView
-                          ref={drawableRef as RefObject<HTMLCanvasElement>}
+                          ref={drawableRef}
                           src={props.src}
                           page={page}
                           onLoadPDF={onLoadPDF}
@@ -226,7 +221,7 @@ export default (props: Props) => {
 const Container = styled.div``;
 
 const MediaPreviewContainer = styled.div`
-  overflow-y: ${({scroll}: {scroll: boolean}) => scroll ? "scroll" : "hidden"};
+  overflow-y: ${({scroll}: {scroll?: boolean}) => scroll ? "scroll" : "hidden"};
   width: 100%;
   height: 100%;
   @media (max-width: 768px) {
