@@ -2,6 +2,8 @@ import React, { RefObject, useCallback, useRef, useState } from "react";
 import styled from "styled-components";
 import Rectangle from "../domain/Recrangle";
 import PDFView from "../components/PDFView";
+import { PDFDocumentProxy } from "pdfjs-dist";
+import Controll from "./Controll";
 
 
 type Props = {
@@ -17,6 +19,9 @@ type Props = {
 export default (props: Props) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const drawableRef = useRef<HTMLImageElement | HTMLCanvasElement>(null);
+  const [isPDFPageLoading, setIsPDFPageLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [maxPage, setMaxPage] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [previewRect, setPreviewRect] = useState<Rectangle | null>(null);
   const [{startX, startY}, setStartPos] = useState({ startX: -1, startY: -1 });
@@ -124,12 +129,10 @@ export default (props: Props) => {
       const canvas: HTMLCanvasElement = drawable;
       ctx.drawImage(canvas, fixedResultRect.left, fixedResultRect.top, width, height, 0, 0, width * scaleFactor, height * scaleFactor);
     }
-
-
     props.onAddRect(fixedRect, canvas);
 
     console.log({"onMouseUp": fixedRect});
-  }, [isDragging, startResultX, startResultY,   drawableRef]);
+  }, [isDragging, startResultX, startResultY, drawableRef]);
 
   const createOnClickRect = useCallback((index: number) => {
     return () => {
@@ -140,42 +143,90 @@ export default (props: Props) => {
     }
   }, [props.rectangles]);
 
-  return <Container
-            ref={containerRef}
-            onMouseDown={onMouseDown}
-            onMouseMove={onMouseMove}
-            onMouseUp={onMouseUp}
-            onTouchStart={onMouseDown}
-            onTouchMove={onMouseMove}
-            onTouchEnd={onMouseUp}
-            // onMouseLeave={onMouseUp} // マウスが要素外に出たとき、mouseUpと同じ処理をする
-  >
-    {props.fileType === "image" ?
-      <img src={props.src}
-        ref={drawableRef as RefObject<HTMLImageElement>}
-        onLoad={props.onLoad}
-        style={{
-          float: "left",
-          display: "inline-block",
-          width: "100%"
-        }} alt=""/> : <PDFView src={props.src} page={1} ref={drawableRef as RefObject<HTMLCanvasElement>} /> }
+  const onLoadPDF = useCallback((doc: PDFDocumentProxy) => {
+    setPage(1);
+    setMaxPage(doc.numPages);
+    console.log(doc.numPages);
+  }, []);
 
+  const onLoadPDFPageBegin = useCallback(() => {
+    setIsPDFPageLoading(true);
+  }, []);
 
-    {previewRect ? <Rect color="red" position="fixed" {...previewRect} /> : null}
-    {props.rectangles.map((rect, i) => i === props.showRectangleIndex ?
-      <Rect color="red" position="absolute"
-        key={`rect-${i}`}
-        left={rect.left}
-        right={rect.right}
-        top={rect.top - (containerRef.current?.scrollTop || 0)}
-        bottom={rect.bottom - (containerRef.current?.scrollTop || 0)}
-        onClick={createOnClickRect(i)} /> : null)}
+  const onLoadPDFPage = useCallback(() => {
+    setIsPDFPageLoading(false);
+  }, []);
+
+  const onClickPlus = useCallback((value: number) => {
+    console.log({value});
+    setPage(value);
+  }, []);
+
+  const onClickMinus = useCallback((value: number) => {
+    console.log({value});
+    setPage(value);
+  }, []);
+
+  const onChangePage = useCallback((value: number) => {
+    if (!isNaN(value) && value != page && value >= 1 && value <= maxPage) {
+      setPage(value);
+    }
+    console.log({page: value});
+  }, [page, maxPage]);
+
+  return <Container>
+      {props.fileType === "pdf" ?
+        <Controll
+          disabled={isPDFPageLoading}
+          pageNum={page}
+          maxPage={maxPage}
+          onChangePage={onChangePage}
+          onClickPlusButton={onClickPlus}
+          onClickMinusButton={onClickMinus} /> : null}
+      <MediaPreviewContainer
+        ref={containerRef}
+        scroll={!isPDFPageLoading}
+        onMouseDown={onMouseDown}
+        onMouseMove={onMouseMove}
+        onMouseUp={onMouseUp}
+        onTouchStart={onMouseDown}
+        onTouchMove={onMouseMove}
+        onTouchEnd={onMouseUp}
+        // onMouseLeave={onMouseUp} // マウスが要素外に出たとき、mouseUpと同じ処理をする
+    >
+      {props.fileType === "image" ?
+        <img src={props.src}
+          ref={drawableRef as RefObject<HTMLImageElement>}
+          onLoad={props.onLoad}
+          style={{
+            display: "inline-block",
+            width: "100%"
+          }} alt=""/> : <PDFView
+                          ref={drawableRef as RefObject<HTMLCanvasElement>}
+                          src={props.src}
+                          page={page}
+                          onLoadPDF={onLoadPDF}
+                          onLoadPDFPageBegin={onLoadPDFPageBegin}
+                          onLoadPDFPage={onLoadPDFPage}
+                        /> }
+
+      {previewRect ? <Rect color="red" position="fixed" {...previewRect} /> : null}
+      {props.rectangles.map((rect, i) => i === props.showRectangleIndex ?
+        <Rect color="red" position="absolute"
+          key={`rect-${i}`}
+          left={rect.left}
+          right={rect.right}
+          top={rect.top - (containerRef.current?.scrollTop || 0)}
+          bottom={rect.bottom - (containerRef.current?.scrollTop || 0)}
+          onClick={createOnClickRect(i)} /> : null)}
+    </MediaPreviewContainer>
   </Container>
 };
 
+const Container = styled.div``;
 
-const Container = styled.div`
-  overflow-y: scroll;
+const MediaPreviewContainer = styled.div`
+  overflow-y: ${({scroll}: {scroll: boolean}) => scroll ? "scroll" : "hidden"};
   width: 100%;
   height: 100%;
   @media (max-width: 768px) {
