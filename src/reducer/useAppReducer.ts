@@ -15,13 +15,13 @@ export type AppState = {
 };
 
 type Actions = ReturnType<
-  typeof ImageLoaded
-| typeof AddRect
-| typeof StartJob
-| typeof UpdateProgress
-| typeof JobError
-| typeof JobComplete
-| typeof AddResult
+  | typeof ImageLoaded
+  | typeof AddRect
+  | typeof StartJob
+  | typeof UpdateProgress
+  | typeof JobError
+  | typeof JobComplete
+  | typeof AddResult
 >;
 
 const IMAGE_LOADED = "IMAGE_LOADED" as const;
@@ -34,34 +34,51 @@ const START_JOB = "START_JOB" as const;
 export const StartJob = (jobId: string) => ({ type: START_JOB, jobId });
 
 const UPDATE_PROGRESS = "UPDATE_PROGRESS" as const;
-export const UpdateProgress = (jobId: string, progress: number) => ({ type: UPDATE_PROGRESS, jobId, progress });
+export const UpdateProgress = (jobId: string, progress: number) => ({
+  type: UPDATE_PROGRESS,
+  jobId,
+  progress,
+});
 
 const JOB_ERROR = "JOB_ERROR" as const;
 export const JobError = (jobId: string) => ({ type: JOB_ERROR, jobId });
 
 const JOB_COMPLETE = "JOB_COMPLETE" as const;
-export const JobComplete = (jobId: string, text: string) => ({ type: JOB_COMPLETE, jobId, text });
+export const JobComplete = (jobId: string, text: string) => ({
+  type: JOB_COMPLETE,
+  jobId,
+  text,
+});
 
 const ADD_RESULT = "ADD_RESULT" as const;
-export const AddResult = (ocrResult: OCRResult) => ({ type: ADD_RESULT, ocrResult });
+export const AddResult = (ocrResult: OCRResult) => ({
+  type: ADD_RESULT,
+  ocrResult,
+});
 
 function reducer(state: AppState, action: Actions): AppState {
-  switch(action.type) {
+  switch (action.type) {
     case IMAGE_LOADED: {
-      return {...state,  imageSrc: action.src};
+      return { ...state, imageSrc: action.src };
     }
 
     case ADD_RECT: {
-      return { ...state, rectangles: [ ...state.rectangles, action.rect ] };
+      return { ...state, rectangles: [...state.rectangles, action.rect] };
     }
 
     case START_JOB: {
-      return { ...state, ocrResults: [ ...state.ocrResults, {
-        jobId: action.jobId,
-        isCompleted: false,
-        progress: 0,
-        text: ""
-      }] }
+      return {
+        ...state,
+        ocrResults: [
+          ...state.ocrResults,
+          {
+            jobId: action.jobId,
+            isCompleted: false,
+            progress: 0,
+            text: "",
+          },
+        ],
+      };
     }
 
     case UPDATE_PROGRESS: {
@@ -77,7 +94,7 @@ function reducer(state: AppState, action: Actions): AppState {
     case JOB_ERROR: {
       const index = state.ocrResults.findIndex(r => r.jobId === action.jobId);
       state.ocrResults.splice(index, 1);
-      return { ...state, ocrResults: [...state.ocrResults] }
+      return { ...state, ocrResults: [...state.ocrResults] };
     }
 
     case JOB_COMPLETE: {
@@ -97,5 +114,9 @@ function reducer(state: AppState, action: Actions): AppState {
 }
 
 export const useAppReducer = (initialState: AppState) => {
-  return useReducer<typeof reducer, AppState>(reducer, initialState, undefined as any);
+  return useReducer<typeof reducer, AppState>(
+    reducer,
+    initialState,
+    undefined as any
+  );
 };

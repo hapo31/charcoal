@@ -10,11 +10,14 @@ type Props = {
 export default (props: Props) => {
   const [isDragover, setDragover] = useState(false);
 
-  const onDrop = useCallback((event: React.DragEvent) => {
-    event.preventDefault();
-    props.onDrop(event);
-    setDragover(false);
-  }, [props.onDrop]);
+  const onDrop = useCallback(
+    (event: React.DragEvent) => {
+      event.preventDefault();
+      props.onDrop(event);
+      setDragover(false);
+    },
+    [props.onDrop]
+  );
 
   const preventDefault = useCallback((event: React.DragEvent) => {
     event.preventDefault();
@@ -29,16 +32,19 @@ export default (props: Props) => {
     setDragover(false);
   }, []);
 
-  return <Container isDragover={isDragover}
-            onClick={props.onClick}
-            onDrag={preventDefault}
-            onDragOver={onDragOver}
-            onDragLeave={onDragLeave}
-            onDrop={onDrop} >
-
-    {props.children}
-  </Container>
-}
+  return (
+    <Container
+      isDragover={isDragover}
+      onClick={props.onClick}
+      onDrag={preventDefault}
+      onDragOver={onDragOver}
+      onDragLeave={onDragLeave}
+      onDrop={onDrop}
+    >
+      {props.children}
+    </Container>
+  );
+};
 
 const Container = styled.div`
   height: 99%;
@@ -49,5 +55,6 @@ const Container = styled.div`
   border-radius: 30px;
   -webkit-text-stroke: 1px white;
 
-  background-color: ${({isDragover}: {isDragover: boolean}) => isDragover ? "rgba(200,200,200, 0.3)": "inherit"};
+  background-color: ${({ isDragover }: { isDragover: boolean }) =>
+    isDragover ? "rgba(200,200,200, 0.3)" : "inherit"};
 `;

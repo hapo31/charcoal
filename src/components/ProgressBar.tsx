@@ -8,16 +8,15 @@ type Props = {
 
 export default (props: Props) => (
   <Container>
-    <Bar percent={props.percentOf0To1}
-      color={props.color} />
+    <Bar percent={props.percentOf0To1} color={props.color} />
   </Container>
 );
 
 type StyledProps = {
   percent: number;
   color: string;
-  style?: CSSProperties
-}
+  style?: CSSProperties;
+};
 
 const Container = styled.span`
   display: inline-block;
@@ -31,9 +30,9 @@ const Container = styled.span`
 const Bar = styled.div.attrs((props: StyledProps) => ({
   style: {
     ...props.style,
-    width: `calc(100% - ${Math.floor((1.0 - props.percent) * 100)}%)`
-  }
+    width: `calc(100% - ${Math.floor((1.0 - props.percent) * 100)}%)`,
+  },
 }))`
   height: 100%;
-  background-color: ${({color}: StyledProps) => color};
+  background-color: ${({ color }: StyledProps) => color};
 `;

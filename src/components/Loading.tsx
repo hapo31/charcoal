@@ -26,13 +26,16 @@ const Rect = styled.div`
   width: 6px;
   display: inline-block;
   animation: sk-stretchdelay 1.2s infinite ease-in-out;
-  animation-delay: ${({delay}: {delay: number}) => `${delay}s` };
+  animation-delay: ${({ delay }: { delay: number }) => `${delay}s`};
 
   @keyframes sk-stretchdelay {
-    0%, 40%, 100% {
+    0%,
+    40%,
+    100% {
       transform: scaleY(0.4);
-    }  20% {
-      transform: scaleY(1.0);
+    }
+    20% {
+      transform: scaleY(1);
     }
   }
 `;

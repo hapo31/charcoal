@@ -34,24 +34,35 @@ export default (props: Props) => {
     props.onChangePage(parseInt(input.value));
   }, []);
 
-  useEffect(()=>{
-    if(inputRef.current == null) {
+  useEffect(() => {
+    if (inputRef.current == null) {
       return;
     }
     inputRef.current.value = props.pageNum.toString();
   }, [props.pageNum]);
 
-  return <Container>
-    <Button onClick={onClickMinus} disabled={props.disabled}>-</Button>
-    <Input ref={inputRef} onChange={onChangeValue} defaultValue={props.pageNum} disabled={props.disabled} type="number" /> / <Input value={props.maxPage} disabled />
-    <Button onClick={onClickPlus} disabled={props.disabled}>+</Button>
-  </Container>
+  return (
+    <Container>
+      <Button onClick={onClickMinus} disabled={props.disabled}>
+        -
+      </Button>
+      <Input
+        ref={inputRef}
+        onChange={onChangeValue}
+        defaultValue={props.pageNum}
+        disabled={props.disabled}
+        type="number"
+      />{" "}
+      / <Input value={props.maxPage} disabled />
+      <Button onClick={onClickPlus} disabled={props.disabled}>
+        +
+      </Button>
+    </Container>
+  );
 };
 
 const Container = styled.div``;
 
-const Button = styled.button`
-
-`;
+const Button = styled.button``;
 
 const Input = styled.input``;

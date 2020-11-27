@@ -1,6 +1,11 @@
 import React, { useCallback, useEffect, useState } from "react";
 import styled from "styled-components";
-import { GlobalWorkerOptions, getDocument, PDFDocumentProxy, PDFPageProxy } from "pdfjs-dist";
+import {
+  GlobalWorkerOptions,
+  getDocument,
+  PDFDocumentProxy,
+  PDFPageProxy,
+} from "pdfjs-dist";
 import Loading from "./Loading";
 
 type Props = {
@@ -12,41 +17,47 @@ type Props = {
 };
 export default React.forwardRef<HTMLImageElement, Props>((props, ref) => {
   const [renderResults, setRenderResults] = useState<(string | null)[]>([]);
-  const [renderQueue, setRenderQueue]  = useState<number[]>([]);
+  const [renderQueue, setRenderQueue] = useState<number[]>([]);
   const [pdfDoc, setPDFDoc] = useState<PDFDocumentProxy | null>(null);
 
-  const renderPage = useCallback((page: PDFPageProxy) => {
-    console.log(`start rendering:${page.pageNumber}`);
-    if (pdfDoc == null) {
-      return;
-    }
-    const viewport = page.getViewport({ scale: 1, rotation: 0 });
-    const canvas = document.createElement("canvas");
-    canvas.height = viewport.height;
-    canvas.width = viewport.width;
-    const ctx = canvas.getContext("2d");
-    if (ctx == null) {
-      return;
-    }
-    const task = page.render({
-      canvasContext: ctx,
-      viewport
-    });
-    task.promise.then(() => {
-      if (props.onLoadPDFPage == null) {
+  const renderPage = useCallback(
+    (page: PDFPageProxy) => {
+      console.log(`start rendering:${page.pageNumber}`);
+      if (pdfDoc == null) {
         return;
       }
-      props.onLoadPDFPage(page);
-      renderResults[page.pageNumber - 1] = canvas.toDataURL();
-      setRenderResults([...renderResults]);
-      renderQueue.splice(renderQueue.findIndex(v => v === page.pageNumber), 1);
-      setRenderQueue([...renderQueue]);
-      console.log(`fininsh rendering:${page.pageNumber}`);
-      if (renderQueue.length > 0) {
-        pdfDoc.getPage(renderQueue[0]).then(renderPage);
+      const viewport = page.getViewport({ scale: 1, rotation: 0 });
+      const canvas = document.createElement("canvas");
+      canvas.height = viewport.height;
+      canvas.width = viewport.width;
+      const ctx = canvas.getContext("2d");
+      if (ctx == null) {
+        return;
       }
-    });
-  }, [pdfDoc, renderResults]);
+      const task = page.render({
+        canvasContext: ctx,
+        viewport,
+      });
+      task.promise.then(() => {
+        if (props.onLoadPDFPage == null) {
+          return;
+        }
+        props.onLoadPDFPage(page);
+        renderResults[page.pageNumber - 1] = canvas.toDataURL();
+        setRenderResults([...renderResults]);
+        renderQueue.splice(
+          renderQueue.findIndex(v => v === page.pageNumber),
+          1
+        );
+        setRenderQueue([...renderQueue]);
+        console.log(`fininsh rendering:${page.pageNumber}`);
+        if (renderQueue.length > 0) {
+          pdfDoc.getPage(renderQueue[0]).then(renderPage);
+        }
+      });
+    },
+    [pdfDoc, renderResults]
+  );
 
   useEffect(() => {
     if (pdfDoc == null) {
@@ -83,13 +94,19 @@ export default React.forwardRef<HTMLImageElement, Props>((props, ref) => {
       //   return;
       // }
       // pdfDoc.destroy();
-    }
+    };
   }, [pdfDoc, renderQueue, renderResults, props.page]);
 
-  return <Container>
-    {renderResults[props.page - 1] == null ? <Loading /> : null}
-    {renderResults.map((url, i) => i === props.page - 1 && url != null ? <img key={`pdf-result-${i}`} ref={ref} src={url} /> : null)}
-  </Container>
+  return (
+    <Container>
+      {renderResults[props.page - 1] == null ? <Loading /> : null}
+      {renderResults.map((url, i) =>
+        i === props.page - 1 && url != null ? (
+          <img key={`pdf-result-${i}`} ref={ref} src={url} />
+        ) : null
+      )}
+    </Container>
+  );
 });
 
 const Container = styled.div`
