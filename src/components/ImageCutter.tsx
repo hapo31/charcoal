@@ -55,13 +55,13 @@ export default (props: Props) => {
       event.preventDefault();
     }
     const fixedRect = fixRect({
-      left: previewRect.left,
-      top: previewRect.top,
+      left: startX,
+      top: startY,
       right: clientX,
       bottom: clientY
     });
     setPreviewRect(fixedRect);
-  }, [isDragging, previewRect]);
+  }, [isDragging, startX, startY]);
 
   const onMouseUp = useCallback((event: React.MouseEvent | React.TouchEvent) => {
     const div = event.target as HTMLDivElement;
