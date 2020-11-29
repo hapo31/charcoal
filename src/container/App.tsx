@@ -1,21 +1,23 @@
-import React, { useCallback, useRef, useState } from "react";
+import React, { createContext, useCallback, useRef, useState } from "react";
 import styled from "styled-components";
 import { createWorker, Worker } from "tesseract.js";
 import copy from "clipboard-copy";
 
 import {
   useAppReducer,
-  AddRect,
-  ImageLoaded,
   StartJob,
   UpdateProgress,
   JobComplete,
   JobError,
+  ImageLoaded,
+  initialState as appInitialState,
+  SetShowCopied,
+  SetShowRectangleIndex,
 } from "../reducer/useAppReducer";
+
 import DnDArea from "../components/DnDArea";
-import ImageCutter from "../components/ImageCutter";
-import Rectangle from "../domain/Recrangle";
 import ResultView from "../components/ResultView";
+import ImageViewerContainer from "./ImageViewerContainer";
 
 type LoggerResult = {
   workerId: string;
@@ -24,18 +26,13 @@ type LoggerResult = {
   progress: number;
 };
 
+export const AppContext = createContext(appInitialState);
+
 export default () => {
   const [timer, setTimer] = useState(-1);
-  const [showRectIndex, setShowRectIndex] = useState(-1);
-  const [showCopied, setShowCompied] = useState(-1);
-  const [fileType, setFileType] = useState<"image" | "pdf">("image");
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const [state, dispatch] = useAppReducer({
-    imageSrc: null,
-    rectangles: [],
-    ocrResults: [],
-  });
+  const [appState, dispatchAppState] = useAppReducer(appInitialState);
 
   const onChangeFile = useCallback((event: React.ChangeEvent) => {
     const input = event.target as HTMLInputElement;
@@ -43,39 +40,42 @@ export default () => {
       return;
     }
 
+    const reader = new FileReader();
     const file = input.files[0];
     if (file.type.indexOf("image") >= 0) {
-      setFileType("image");
+      reader.onload = () => {
+        dispatchAppState(ImageLoaded(reader.result as string, "image"));
+      };
     } else if (file.type.indexOf("pdf") >= 0) {
-      setFileType("pdf");
+      reader.onload = () => {
+        dispatchAppState(ImageLoaded(reader.result as string, "pdf"));
+      };
+    } else {
+      // TODO: なにかエラーメッセージ
+      return;
     }
-    const reader = new FileReader();
-
-    reader.onload = () => {
-      dispatch(ImageLoaded(reader.result as string));
-    };
-
     reader.readAsDataURL(file);
   }, []);
 
-  const onImageLoad = useCallback(
-    async (event: React.ChangeEvent<HTMLImageElement>) => {
-      const { width, height } = event.target;
-    },
-    []
-  );
-
   const onDrop = useCallback(async (event: React.DragEvent) => {
     const files = event.dataTransfer.files;
+    const reader = new FileReader();
     const file = files.item(0);
     if (file == null) {
       return;
     }
-    const reader = new FileReader();
-
-    reader.onload = () => {
-      dispatch(ImageLoaded(reader.result as string));
-    };
+    if (file.type.indexOf("image") >= 0) {
+      reader.onload = () => {
+        dispatchAppState(ImageLoaded(reader.result as string, "image"));
+      };
+    } else if (file.type.indexOf("pdf") >= 0) {
+      reader.onload = () => {
+        dispatchAppState(ImageLoaded(reader.result as string, "pdf"));
+      };
+    } else {
+      // TODO: なにかエラーメッセージ
+      return;
+    }
 
     reader.readAsDataURL(file);
   }, []);
@@ -89,13 +89,11 @@ export default () => {
     input.click();
   }, []);
 
-  const onAddRect = useCallback(
-    async (rect: Rectangle, resultImage: HTMLCanvasElement) => {
-      dispatch(AddRect(rect));
-
+  const onAddTask = useCallback(
+    async (resultImage: HTMLCanvasElement) => {
       const worker = createWorker({
         logger: (m: LoggerResult) => {
-          dispatch(UpdateProgress(m.jobId, m.progress));
+          dispatchAppState(UpdateProgress(m.jobId, m.progress));
         },
       });
 
@@ -103,14 +101,14 @@ export default () => {
         worker,
         resultImage,
         jobId => {
-          dispatch(StartJob(jobId));
+          dispatchAppState(StartJob(jobId));
         },
         (jobId, text) => {
-          dispatch(JobComplete(jobId, text));
+          dispatchAppState(JobComplete(jobId, text));
         }
       ).catch(({ jobId, error }: { jobId: string; error: any }) => {
         console.error(error);
-        dispatch(JobError(jobId));
+        dispatchAppState(JobError(jobId));
       });
     },
     []
@@ -120,27 +118,22 @@ export default () => {
     <>
       <RootContainer>
         <ImageContainer>
-          {state.imageSrc == null ? (
+          {appState.imageSrc == null ? (
             <>
               <DnDArea onClick={onClick} onDrop={onDrop}>
-                ここをクリックして画像を選択
+                ここをクリックして画像かPDFを選択
               </DnDArea>
               <Input ref={inputRef} onChange={onChangeFile} />
             </>
           ) : (
-            <ImageCutter
-              fileType={fileType}
-              showRectangleIndex={showRectIndex}
-              src={state.imageSrc}
-              onLoad={onImageLoad}
-              onAddRect={onAddRect}
-              rectangles={state.rectangles}
-            />
+            <AppContext.Provider value={appState}>
+              <ImageViewerContainer onAddTask={onAddTask} />
+            </AppContext.Provider>
           )}
         </ImageContainer>
         <ResultContainer>
           <ResultTitle>結果</ResultTitle>
-          {state.ocrResults.map((result, i) => (
+          {appState.ocrResults.map((result, i) => (
             <>
               <ResultView
                 onClick={text => {
@@ -148,26 +141,26 @@ export default () => {
                     clearTimeout(timer);
                   }
                   copy(text);
-                  setShowCompied(i);
+                  dispatchAppState(SetShowCopied(i));
                   setTimer(
                     setTimeout(() => {
-                      setShowCompied(-1);
+                      dispatchAppState(SetShowCopied(-1));
                       setTimer(-1);
                     }, 1000)
                   );
                 }}
                 onMouseEnter={() => {
-                  setShowRectIndex(i);
+                  dispatchAppState(SetShowRectangleIndex(i));
                 }}
                 onMouseLeave={() => {
-                  setShowRectIndex(-1);
+                  dispatchAppState(SetShowRectangleIndex(-1));
                 }}
                 isComplete={result.isCompleted}
                 progress={result.progress}
                 text={result.text}
                 key={`result-${i}`}
               />
-              {showCopied === i ? (
+              {appState.showCopied === i ? (
                 <Overray key={`overray-${i}`}>コピーしました</Overray>
               ) : null}
             </>
@@ -178,7 +171,7 @@ export default () => {
         <h2>使い方</h2>
         <h3>概要</h3>
         <p>
-          画像を読み込み、範囲を指定した場所の文字を読み取って文章データ化します。
+          画像やPDFを読み込み、範囲を指定した場所の文字を読み取って文章データ化します。
           読み取った文章は、結果が表示されている部分をクリックするとコピペ出来ます。
         </p>
         <p>
@@ -190,7 +183,7 @@ export default () => {
         <h3>手順</h3>
         <ul>
           <li>
-            「ここをクリックして画像を選択」を押して画像を選ぶ（PCの場合はドラッグアンドドロップでもOK）
+            「ここをクリックして画像かPDFを選択」を押して画像かPDFファイルを選ぶ（PCの場合はドラッグアンドドロップでもOK）
           </li>
           <li>
             画像が表示されたら、読み取る範囲をタッチやドラッグアンドドロップで選択

@@ -9,26 +9,36 @@ type OCRResult = {
 };
 
 export type AppState = {
+  fileType: AcceptFileType;
   imageSrc: string | null;
-  rectangles: Rectangle[];
   ocrResults: OCRResult[];
+  showRectangleIndex: number;
+  showCopied: number;
+};
+
+export const initialState: AppState = {
+  imageSrc: null,
+  ocrResults: [],
+  fileType: "image",
+  showCopied: -1,
+  showRectangleIndex: -1
 };
 
 type Actions = ReturnType<
   | typeof ImageLoaded
-  | typeof AddRect
   | typeof StartJob
   | typeof UpdateProgress
   | typeof JobError
   | typeof JobComplete
+  | typeof SetShowCopied
+  | typeof SetShowRectangleIndex
   | typeof AddResult
 >;
 
-const IMAGE_LOADED = "IMAGE_LOADED" as const;
-export const ImageLoaded = (src: string) => ({ type: IMAGE_LOADED, src });
+export type AcceptFileType = "image" | "pdf";
 
-const ADD_RECT = "ADD_RECT" as const;
-export const AddRect = (rect: Rectangle) => ({ type: ADD_RECT, rect });
+const IMAGE_LOADED = "IMAGE_LOADED" as const;
+export const ImageLoaded = (src: string, fileType: AcceptFileType) => ({ type: IMAGE_LOADED, src, fileType });
 
 const START_JOB = "START_JOB" as const;
 export const StartJob = (jobId: string) => ({ type: START_JOB, jobId });
@@ -50,6 +60,12 @@ export const JobComplete = (jobId: string, text: string) => ({
   text,
 });
 
+const SET_SHOW_COPIED = "SET_SHOW_COPIED" as const;
+export const SetShowCopied = (index: number) => ({ type: SET_SHOW_COPIED, index });
+
+const SET_SHOW_RECTANGLE_INDEX = "SET_SHOW_RECTANGLE_INDEX" as const;
+export const SetShowRectangleIndex = (index: number) => ({ type: SET_SHOW_RECTANGLE_INDEX, index });
+
 const ADD_RESULT = "ADD_RESULT" as const;
 export const AddResult = (ocrResult: OCRResult) => ({
   type: ADD_RESULT,
@@ -59,11 +75,11 @@ export const AddResult = (ocrResult: OCRResult) => ({
 function reducer(state: AppState, action: Actions): AppState {
   switch (action.type) {
     case IMAGE_LOADED: {
-      return { ...state, imageSrc: action.src };
-    }
-
-    case ADD_RECT: {
-      return { ...state, rectangles: [...state.rectangles, action.rect] };
+      return {
+        ...state,
+        imageSrc: action.src,
+        fileType: action.fileType
+      }
     }
 
     case START_JOB: {
@@ -102,6 +118,20 @@ function reducer(state: AppState, action: Actions): AppState {
       state.ocrResults[index].text = action.text;
       state.ocrResults[index].isCompleted = true;
       return { ...state, ocrResults: [...state.ocrResults] };
+    }
+
+    case SET_SHOW_COPIED: {
+      return {
+        ...state,
+        showCopied: action.index
+      };
+    }
+
+    case SET_SHOW_RECTANGLE_INDEX: {
+      return {
+        ...state,
+        showRectangleIndex: action.index
+      };
     }
 
     case ADD_RESULT: {
