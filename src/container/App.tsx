@@ -197,7 +197,8 @@ export default () => {
 const RootContainer = styled.main`
   background-color: #333;
   display: flex;
-  height: 92vh;
+  height: 100%;
+  min-height: 92vh;
   width: 100%;
   @media (max-width: 768px) {
     display: block;
@@ -213,7 +214,6 @@ const Input = styled.input.attrs(() => ({
 `;
 
 const ImageContainer = styled.div`
-  height: 100%;
   flex: 5 1;
   @media (max-width: 768px) {
     height: 60vh;

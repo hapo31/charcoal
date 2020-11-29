@@ -190,24 +190,16 @@ export default (props: Props) => {
   const onLoadPDFPage = useCallback(() => {}, []);
 
   const onClickPlus = useCallback((value: number) => {
-    console.log({ value });
     setPage(value);
   }, []);
 
   const onClickMinus = useCallback((value: number) => {
-    console.log({ value });
     setPage(value);
   }, []);
 
-  const onChangePage = useCallback(
-    (value: number) => {
-      if (!isNaN(value) && value != page && value >= 1 && value <= maxPage) {
-        setPage(value);
-      }
-      console.log({ page: value });
-    },
-    [page, maxPage]
-  );
+  const onChangePage = useCallback((value: number) => {
+    setPage(value);
+  }, []);
 
   return (
     <Container>

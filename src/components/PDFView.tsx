@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import {
   GlobalWorkerOptions,
@@ -16,27 +16,36 @@ type Props = {
   onLoadPDFPage?: (doc: PDFPageProxy) => void;
 };
 export default React.forwardRef<HTMLImageElement, Props>((props, ref) => {
+  const containerRef = useRef<HTMLDivElement>(null);
   const [renderResults, setRenderResults] = useState<(string | null)[]>([]);
   const [renderQueue, setRenderQueue] = useState<number[]>([]);
   const [pdfDoc, setPDFDoc] = useState<PDFDocumentProxy | null>(null);
+  const [{ width, height }, setViewPort] = useState({ width: 0, height: 0 });
 
   const renderPage = useCallback(
     (page: PDFPageProxy) => {
+      const container = containerRef.current;
       console.log(`start rendering:${page.pageNumber}`);
-      if (pdfDoc == null) {
+      if (pdfDoc == null || container == null) {
         return;
       }
-      const viewport = page.getViewport({ scale: 1, rotation: 0 });
+      const testViewport = page.getViewport({ scale: 2.0, rotation: 0 });
+      const scale = getViewPortScale(testViewport, {
+        width: container.clientWidth,
+        height: container.clientHeight,
+      });
+      const fixedViewPort = page.getViewport({ scale, rotation: 0 });
       const canvas = document.createElement("canvas");
-      canvas.height = viewport.height;
-      canvas.width = viewport.width;
+      setViewPort(fixedViewPort);
+      canvas.height = fixedViewPort.height;
+      canvas.width = fixedViewPort.width;
       const ctx = canvas.getContext("2d");
       if (ctx == null) {
         return;
       }
       const task = page.render({
         canvasContext: ctx,
-        viewport,
+        viewport: fixedViewPort,
       });
       task.promise.then(() => {
         if (props.onLoadPDFPage == null) {
@@ -98,11 +107,15 @@ export default React.forwardRef<HTMLImageElement, Props>((props, ref) => {
   }, [pdfDoc, renderQueue, renderResults, props.page]);
 
   return (
-    <Container>
-      {renderResults[props.page - 1] == null ? <Loading /> : null}
+    <Container ref={containerRef}>
+      {renderResults[props.page - 1] == null ? (
+        <DummyContainer width={width} height={height}>
+          <Loading />
+        </DummyContainer>
+      ) : null}
       {renderResults.map((url, i) =>
         i === props.page - 1 && url != null ? (
-          <img key={`pdf-result-${i}`} ref={ref} src={url} />
+          <Img key={`pdf-result-${i}`} ref={ref} src={url} />
         ) : null
       )}
     </Container>
@@ -113,3 +126,26 @@ const Container = styled.div`
   width: 100%;
   height: 100%;
 `;
+
+type ViewPort = {
+  width: number;
+  height: number;
+};
+
+const DummyContainer = styled.div`
+  max-width: 100vh;
+  width: ${({ width }: ViewPort) => `${width}px`};
+  height: ${({ height }: ViewPort) => `${height}px`};
+`;
+
+const Img = styled.img`
+  max-width: 100%;
+`;
+
+function getViewPortScale(src: ViewPort, target: ViewPort) {
+  if (src.width > src.height) {
+    return src.width / target.width;
+  } else {
+    return src.height / target.height;
+  }
+}

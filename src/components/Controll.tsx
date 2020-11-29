@@ -29,10 +29,24 @@ export default (props: Props) => {
     }
   }, [props.pageNum, props.maxPage]);
 
-  const onChangeValue = useCallback((event: React.ChangeEvent) => {
-    const input = event.target as HTMLInputElement;
-    props.onChangePage(parseInt(input.value));
-  }, []);
+  const onKeyPress = useCallback(
+    (event: React.KeyboardEvent) => {
+      const input = event.target as HTMLInputElement;
+      switch (event.key) {
+        case "Enter": {
+          const value = parseInt(input.value);
+          if (value <= 0) {
+            props.onChangePage(1);
+          } else if (value > props.maxPage) {
+            props.onChangePage(props.maxPage);
+          } else {
+            props.onChangePage(value);
+          }
+        }
+      }
+    },
+    [props.maxPage]
+  );
 
   useEffect(() => {
     if (inputRef.current == null) {
@@ -48,12 +62,13 @@ export default (props: Props) => {
       </Button>
       <Input
         ref={inputRef}
-        onChange={onChangeValue}
+        onKeyPress={onKeyPress}
         defaultValue={props.pageNum}
         disabled={props.disabled}
         type="number"
-      />{" "}
-      / <Input value={props.maxPage} disabled />
+      />
+      <Divider>/</Divider>
+      <Input value={props.maxPage} disabled />
       <Button onClick={onClickPlus} disabled={props.disabled}>
         +
       </Button>
@@ -61,8 +76,34 @@ export default (props: Props) => {
   );
 };
 
-const Container = styled.div``;
+const Container = styled.div`
+  user-select: none;
+  width: 100%;
+  text-align: center;
+  background-color: rgba(200, 200, 200, 0.8);
+  position: fixed;
+  bottom: 0;
+`;
 
-const Button = styled.button``;
+const Button = styled.button`
+  height: 30px;
+  width: 30px;
+  size: 24px;
+  font-weight: bold;
+  border: 2px gray solid;
+`;
 
-const Input = styled.input``;
+const Input = styled.input`
+  size: 24px;
+  font-weight: bold;
+  height: 24px;
+  width: 30px;
+`;
+
+const Divider = styled.span`
+  display: inline-block;
+  margin: 0 4px 0;
+  size: 24px;
+  color: #ddd;
+  font-weight: bold;
+`;
