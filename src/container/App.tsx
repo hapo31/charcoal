@@ -89,30 +89,27 @@ export default () => {
     input.click();
   }, []);
 
-  const onAddTask = useCallback(
-    async (resultImage: HTMLCanvasElement) => {
-      const worker = createWorker({
-        logger: (m: LoggerResult) => {
-          dispatchAppState(UpdateProgress(m.jobId, m.progress));
-        },
-      });
+  const onAddTask = useCallback(async (resultImage: HTMLCanvasElement) => {
+    const worker = createWorker({
+      logger: (m: LoggerResult) => {
+        dispatchAppState(UpdateProgress(m.jobId, m.progress));
+      },
+    });
 
-      await recognize(
-        worker,
-        resultImage,
-        jobId => {
-          dispatchAppState(StartJob(jobId));
-        },
-        (jobId, text) => {
-          dispatchAppState(JobComplete(jobId, text));
-        }
-      ).catch(({ jobId, error }: { jobId: string; error: any }) => {
-        console.error(error);
-        dispatchAppState(JobError(jobId));
-      });
-    },
-    []
-  );
+    await recognize(
+      worker,
+      resultImage,
+      jobId => {
+        dispatchAppState(StartJob(jobId));
+      },
+      (jobId, text) => {
+        dispatchAppState(JobComplete(jobId, text));
+      }
+    ).catch(({ jobId, error }: { jobId: string; error: any }) => {
+      console.error(error);
+      dispatchAppState(JobError(jobId));
+    });
+  }, []);
 
   return (
     <>

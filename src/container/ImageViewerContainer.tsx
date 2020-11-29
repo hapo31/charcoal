@@ -9,12 +9,11 @@ type Props = {
 };
 
 export default (props: Props) => {
-
   const appState = useContext(AppContext);
 
   const [state, dispatchImageState] = useImageReducer({
     rectangles: [],
-    fileType: appState.fileType
+    fileType: appState.fileType,
   });
 
   const onAddRect = useCallback(
@@ -32,12 +31,14 @@ export default (props: Props) => {
     []
   );
 
-  return <ImageCutter
-          fileType={appState.fileType}
-          rectangles={state.rectangles}
-          src={appState.imageSrc || ""}
-          showRectangleIndex={appState.showRectangleIndex}
-          onAddRect={onAddRect}
-          onLoad={onLoadImage}
-        />
+  return (
+    <ImageCutter
+      fileType={appState.fileType}
+      rectangles={state.rectangles}
+      src={appState.imageSrc || ""}
+      showRectangleIndex={appState.showRectangleIndex}
+      onAddRect={onAddRect}
+      onLoad={onLoadImage}
+    />
+  );
 };

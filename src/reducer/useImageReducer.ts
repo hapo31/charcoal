@@ -8,16 +8,17 @@ export type ImageState = {
 
 export const initialState: ImageState = {
   rectangles: [],
-  fileType: "image"
+  fileType: "image",
 };
 
-type Actions = ReturnType<
-  | typeof AddRect
->;
+type Actions = ReturnType<typeof AddRect>;
 const ADD_RECT = "ADD_RECT" as const;
 export const AddRect = (rect: Rectangle) => ({ type: ADD_RECT, rect });
 
-function reducer(state: ImageState = initialState, action: Actions): ImageState {
+function reducer(
+  state: ImageState = initialState,
+  action: Actions
+): ImageState {
   switch (action.type) {
     case ADD_RECT: {
       return { ...state, rectangles: [...state.rectangles, action.rect] };

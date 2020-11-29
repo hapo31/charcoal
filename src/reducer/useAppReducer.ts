@@ -21,7 +21,7 @@ export const initialState: AppState = {
   ocrResults: [],
   fileType: "image",
   showCopied: -1,
-  showRectangleIndex: -1
+  showRectangleIndex: -1,
 };
 
 type Actions = ReturnType<
@@ -38,7 +38,11 @@ type Actions = ReturnType<
 export type AcceptFileType = "image" | "pdf";
 
 const IMAGE_LOADED = "IMAGE_LOADED" as const;
-export const ImageLoaded = (src: string, fileType: AcceptFileType) => ({ type: IMAGE_LOADED, src, fileType });
+export const ImageLoaded = (src: string, fileType: AcceptFileType) => ({
+  type: IMAGE_LOADED,
+  src,
+  fileType,
+});
 
 const START_JOB = "START_JOB" as const;
 export const StartJob = (jobId: string) => ({ type: START_JOB, jobId });
@@ -61,10 +65,16 @@ export const JobComplete = (jobId: string, text: string) => ({
 });
 
 const SET_SHOW_COPIED = "SET_SHOW_COPIED" as const;
-export const SetShowCopied = (index: number) => ({ type: SET_SHOW_COPIED, index });
+export const SetShowCopied = (index: number) => ({
+  type: SET_SHOW_COPIED,
+  index,
+});
 
 const SET_SHOW_RECTANGLE_INDEX = "SET_SHOW_RECTANGLE_INDEX" as const;
-export const SetShowRectangleIndex = (index: number) => ({ type: SET_SHOW_RECTANGLE_INDEX, index });
+export const SetShowRectangleIndex = (index: number) => ({
+  type: SET_SHOW_RECTANGLE_INDEX,
+  index,
+});
 
 const ADD_RESULT = "ADD_RESULT" as const;
 export const AddResult = (ocrResult: OCRResult) => ({
@@ -78,8 +88,8 @@ function reducer(state: AppState, action: Actions): AppState {
       return {
         ...state,
         imageSrc: action.src,
-        fileType: action.fileType
-      }
+        fileType: action.fileType,
+      };
     }
 
     case START_JOB: {
@@ -123,14 +133,14 @@ function reducer(state: AppState, action: Actions): AppState {
     case SET_SHOW_COPIED: {
       return {
         ...state,
-        showCopied: action.index
+        showCopied: action.index,
       };
     }
 
     case SET_SHOW_RECTANGLE_INDEX: {
       return {
         ...state,
-        showRectangleIndex: action.index
+        showRectangleIndex: action.index,
       };
     }
 
