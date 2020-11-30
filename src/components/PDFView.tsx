@@ -29,7 +29,10 @@ export default React.forwardRef<HTMLImageElement, Props>((props, ref) => {
       if (pdfDoc == null || container == null) {
         return;
       }
-      const testViewport = page.getViewport({ scale: 2.0, rotation: 0 });
+      const testViewport = page.getViewport({
+        scale: 2.0 * window.devicePixelRatio,
+        rotation: 0,
+      });
       const scale = getViewPortScale(testViewport, {
         width: container.clientWidth,
         height: container.clientHeight,
