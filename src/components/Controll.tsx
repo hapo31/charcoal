@@ -48,6 +48,21 @@ export default (props: Props) => {
     [props.maxPage]
   );
 
+  const onBlur = useCallback(
+    (event: React.FocusEvent) => {
+      const input = event.target as HTMLInputElement;
+      const value = parseInt(input.value);
+      if (value <= 0) {
+        props.onChangePage(1);
+      } else if (value > props.maxPage) {
+        props.onChangePage(props.maxPage);
+      } else {
+        props.onChangePage(value);
+      }
+    },
+    [props.maxPage]
+  );
+
   useEffect(() => {
     if (inputRef.current == null) {
       return;
@@ -63,6 +78,7 @@ export default (props: Props) => {
       <Input
         ref={inputRef}
         onKeyPress={onKeyPress}
+        onBlur={onBlur}
         defaultValue={props.pageNum}
         disabled={props.disabled}
         type="number"
