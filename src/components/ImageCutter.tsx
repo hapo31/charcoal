@@ -31,16 +31,30 @@ export default (props: Props) => {
     startResultY: -1,
   });
 
+  // const [debugImg, setDebugImg] = useState("");
+
   const onMouseDown = useCallback(
     (event: React.MouseEvent | React.TouchEvent) => {
-      const div = event.target as HTMLDivElement;
       const { pageX, pageY, clientX, clientY } = positionExtract(event);
       if (!isTouchEvent(event)) {
         event.preventDefault();
       }
+
+      const container = containerRef.current;
+      if (container == null) {
+        return;
+      }
+
+      const offsetX = container.offsetLeft;
+      const offsetY = container.offsetTop;
+      const scrollTop = container.scrollTop;
+      const positionRetioX = (pageX - offsetX) / container.clientWidth;
+      const positionRetioY =
+        (pageY - offsetY + scrollTop) / container.clientHeight;
+
       setStartPos({
-        startX: pageX,
-        startY: pageY,
+        startX: clientX,
+        startY: clientY,
       });
       setPreviewRect({
         left: clientX,
@@ -49,8 +63,8 @@ export default (props: Props) => {
         bottom: clientY,
       });
       setResult({
-        startResultX: pageX,
-        startResultY: pageY + div.scrollTop,
+        startResultX: positionRetioX,
+        startResultY: positionRetioY,
       });
       setIsDragging(true);
       console.log("onMouseDown");
@@ -80,7 +94,6 @@ export default (props: Props) => {
 
   const onMouseUp = useCallback(
     (event: React.MouseEvent | React.TouchEvent) => {
-      const div = event.target as HTMLDivElement;
       if (!isDragging) {
         return;
       }
@@ -89,40 +102,39 @@ export default (props: Props) => {
         event.preventDefault();
       }
 
+      const container = containerRef.current;
+      if (container == null) {
+        return;
+      }
+
+      const offsetX = container.offsetLeft;
+      const offsetY = container.offsetTop;
+      const scrollTop = container.scrollTop;
+      const positionRetioX = (pageX - offsetX) / container.clientWidth;
+      const positionRetioY =
+        (pageY - offsetY + scrollTop) / container.clientHeight;
+
       setIsDragging(false);
       setStartPos({ startX: -1, startY: -1 });
       setPreviewRect(null);
 
-      const fixedRect = fixRect({
-        left: startX,
-        top: startY,
-        right: pageX,
-        bottom: pageY,
-      });
-
-      const scaleFactor = window.devicePixelRatio;
-
       const fixedResultRect = fixRect({
         left: startResultX,
         top: startResultY,
-        right: pageX,
-        bottom: pageY + div.scrollTop,
+        right: positionRetioX,
+        bottom: positionRetioY,
       });
 
-      const width = fixedResultRect.right - fixedResultRect.left;
-      const height = fixedResultRect.bottom - fixedResultRect.top;
+      const widthRatio = fixedResultRect.right - fixedResultRect.left;
+      const heightRatio = fixedResultRect.bottom - fixedResultRect.top;
 
-      if (width * height < 100) {
-        return;
-      }
-
-      const canvas = document.createElement("canvas");
-
-      canvas.width = width * scaleFactor;
-      canvas.height = height * scaleFactor;
-
-      const ctx = canvas.getContext("2d");
-      if (ctx == null) {
+      if (
+        container.clientWidth *
+          container.clientHeight *
+          widthRatio *
+          heightRatio <
+        100
+      ) {
         return;
       }
 
@@ -130,39 +142,34 @@ export default (props: Props) => {
       if (drawable == null) {
         return;
       }
+      const canvas = document.createElement("canvas");
+      const img: HTMLImageElement = drawable;
 
-      if (isImageElement(props.fileType, drawable)) {
-        const img: HTMLImageElement = drawable;
-        const widthRatio = img.naturalWidth / img.width;
-        const heightRatio = img.naturalHeight / img.height;
-        ctx.drawImage(
-          img,
-          fixedResultRect.left * widthRatio,
-          fixedResultRect.top * heightRatio,
-          width * widthRatio,
-          height * heightRatio,
-          0,
-          0,
-          width * scaleFactor,
-          height * scaleFactor
-        );
-      } else {
-        const canvas: HTMLCanvasElement = drawable;
-        ctx.drawImage(
-          canvas,
-          fixedResultRect.left,
-          fixedResultRect.top,
-          width,
-          height,
-          0,
-          0,
-          width * scaleFactor,
-          height * scaleFactor
-        );
+      canvas.width = img.naturalWidth * widthRatio;
+      canvas.height = img.naturalHeight * heightRatio;
+
+      const ctx = canvas.getContext("2d");
+      if (ctx == null) {
+        return;
       }
-      props.onAddRect(fixedRect, canvas);
 
-      console.log({ onMouseUp: fixedRect });
+      ctx.drawImage(
+        img,
+        img.naturalWidth * fixedResultRect.left,
+        img.naturalHeight * fixedResultRect.top,
+        img.naturalWidth * widthRatio,
+        img.naturalHeight * heightRatio,
+        0,
+        0,
+        canvas.width,
+        canvas.height
+      );
+
+      // setDebugImg(canvas.toDataURL());
+
+      props.onAddRect(fixedResultRect, canvas);
+
+      console.log({ onMouseUp: fixedResultRect });
     },
     [isDragging, startResultX, startResultY, drawableRef]
   );
@@ -202,67 +209,70 @@ export default (props: Props) => {
   }, []);
 
   return (
-    <Container>
-      {props.fileType === "pdf" ? (
-        <Controll
-          pageNum={page}
-          maxPage={maxPage}
-          onChangePage={onChangePage}
-          onClickPlusButton={onClickPlus}
-          onClickMinusButton={onClickMinus}
-        />
-      ) : null}
-      <MediaPreviewContainer
-        ref={containerRef}
-        onMouseDown={onMouseDown}
-        onMouseMove={onMouseMove}
-        onMouseUp={onMouseUp}
-        onTouchStart={onMouseDown}
-        onTouchMove={onMouseMove}
-        onTouchEnd={onMouseUp}
-        // onMouseLeave={onMouseUp} // マウスが要素外に出たとき、mouseUpと同じ処理をする
-      >
-        {props.fileType === "image" ? (
-          <img
-            src={props.src}
-            ref={drawableRef}
-            onLoad={props.onLoad}
-            style={{
-              display: "inline-block",
-              width: "100%",
-            }}
-            alt=""
+    <>
+      <Container>
+        {props.fileType === "pdf" ? (
+          <Controll
+            pageNum={page}
+            maxPage={maxPage}
+            onChangePage={onChangePage}
+            onClickPlusButton={onClickPlus}
+            onClickMinusButton={onClickMinus}
           />
-        ) : (
-          <PDFView
-            ref={drawableRef}
-            src={props.src}
-            page={page}
-            onLoadPDF={onLoadPDF}
-            onLoadPDFPageBegin={onLoadPDFPageBegin}
-            onLoadPDFPage={onLoadPDFPage}
-          />
-        )}
-
-        {previewRect ? (
-          <Rect color="red" position="fixed" {...previewRect} />
         ) : null}
-        {props.rectangles.map((rect, i) =>
-          i === props.showRectangleIndex ? (
-            <Rect
-              color="red"
-              position="absolute"
-              key={`rect-${i}`}
-              left={rect.left}
-              right={rect.right}
-              top={rect.top - (containerRef.current?.scrollTop || 0)}
-              bottom={rect.bottom - (containerRef.current?.scrollTop || 0)}
-              onClick={createOnClickRect(i)}
+        <MediaPreviewContainer
+          ref={containerRef}
+          onMouseDown={onMouseDown}
+          onMouseMove={onMouseMove}
+          onMouseUp={onMouseUp}
+          onTouchStart={onMouseDown}
+          onTouchMove={onMouseMove}
+          onTouchEnd={onMouseUp}
+          // onMouseLeave={onMouseUp} // マウスが要素外に出たとき、mouseUpと同じ処理をする
+        >
+          {props.fileType === "image" ? (
+            <img
+              src={props.src}
+              ref={drawableRef}
+              onLoad={props.onLoad}
+              style={{
+                display: "inline-block",
+                width: "100%",
+              }}
+              alt=""
             />
-          ) : null
-        )}
-      </MediaPreviewContainer>
-    </Container>
+          ) : (
+            <PDFView
+              ref={drawableRef}
+              src={props.src}
+              page={page}
+              onLoadPDF={onLoadPDF}
+              onLoadPDFPageBegin={onLoadPDFPageBegin}
+              onLoadPDFPage={onLoadPDFPage}
+            />
+          )}
+
+          {previewRect ? (
+            <PreviewRect color="red" position="fixed" {...previewRect} />
+          ) : null}
+          {props.rectangles.map((rect, i) =>
+            i === props.showRectangleIndex ? (
+              <Rect
+                color="red"
+                position="absolute"
+                key={`rect-${i}`}
+                left={rect.left}
+                right={rect.right}
+                top={rect.top - (containerRef.current?.scrollTop || 0)}
+                bottom={rect.bottom - (containerRef.current?.scrollTop || 0)}
+                onClick={createOnClickRect(i)}
+              />
+            ) : null
+          )}
+        </MediaPreviewContainer>
+      </Container>
+      {/* {debugImg !== "" ? <img src={debugImg} alt="" /> : null} */}
+    </>
   );
 };
 
@@ -284,6 +294,18 @@ type RectProps = Partial<Rectangle> & {
 };
 
 const Rect = styled.div.attrs((props: RectProps) => ({
+  style: {
+    position: props.position,
+    left: `${(props.left || 0) * 100}%`,
+    top: `${(props.top || 0) * 100}%`,
+    width: `${(props.right || 0) * 100 - (props.left || 0) * 100}%`,
+    height: `${(props.bottom || 0) * 100 - (props.top || 0) * 100}%`,
+  },
+}))`
+  border: 2px solid ${({ color }: RectProps) => color};
+`;
+
+const PreviewRect = styled.div.attrs((props: RectProps) => ({
   style: {
     position: props.position,
     left: `${props.left}px`,
@@ -347,11 +369,4 @@ function isTouchEvent(
   event: React.MouseEvent | React.TouchEvent
 ): event is React.TouchEvent {
   return "touches" in event;
-}
-
-function isImageElement(
-  type: "image" | "pdf",
-  drawable: HTMLImageElement | HTMLCanvasElement
-): drawable is HTMLImageElement {
-  return type === "image";
 }
