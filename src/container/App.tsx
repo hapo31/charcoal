@@ -169,6 +169,8 @@ export default () => {
         <h3>概要</h3>
         <p>
           画像やPDFを読み込み、範囲を指定した場所の文字を読み取って文章データ化します。
+          読み込んだ画像、PDF、及び結果は一切外部には送信しません。処理はすべてクライアントで完結します。
+          ※処理中の通信は、ライブラリが文字を分析するときのモデルデータをダウンロードするために発生します。
           読み取った文章は、結果が表示されている部分をクリックするとコピペ出来ます。
         </p>
         <p>
@@ -185,10 +187,18 @@ export default () => {
           <li>
             画像が表示されたら、読み取る範囲をタッチやドラッグアンドドロップで選択
           </li>
-          <li>
-            しばらくすると、「結果」という欄に読み取り結果が出てきます（どの範囲を読み取ったかは、マウスを重ねたり一度タップすると赤い四角形が描画されて分かるようになります）
-          </li>
+          <li>しばらくすると、「結果」という欄に読み取り結果が出てきます。</li>
         </ul>
+        <h3>ソースコード</h3>
+        <p>
+          <a
+            href="https://github.com/hapo31/charcoal"
+            about="_blank"
+            rel="noopener noreferrer"
+          >
+            https://github.com/hapo31/charcoal
+          </a>
+        </p>
       </HowTo>
     </>
   );
@@ -269,6 +279,10 @@ const Overray = styled.div`
 
 const HowTo = styled.article`
   color: #fefefe;
+  > a,
+  a:visited {
+    color: #99f;
+  }
 `;
 
 async function recognize(
