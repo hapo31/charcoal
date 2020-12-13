@@ -1,6 +1,6 @@
 import React, { RefObject, useCallback, useRef, useState } from "react";
 import styled from "styled-components";
-import Rectangle from "../domain/Recrangle";
+import Rectangle, { Rect } from "../domain/Recrangle";
 import PDFView from "../components/PDFView";
 import { PDFDocumentProxy } from "pdfjs-dist";
 import Controll from "./Controll";
@@ -8,11 +8,9 @@ import Controll from "./Controll";
 type Props = {
   fileType: "image" | "pdf";
   src: string;
-  rectangles: Rectangle[];
-  showRectangleIndex: number;
   onLoad: (event: React.ChangeEvent<HTMLImageElement>) => void;
   onClickRect?: (rectIndex: number) => void;
-  onAddRect: (rect: Rectangle, resultImage: HTMLCanvasElement) => void;
+  onAddRect: (resultImage: HTMLCanvasElement) => void;
 };
 
 export default (props: Props) => {
@@ -21,7 +19,7 @@ export default (props: Props) => {
   const [page, setPage] = useState(1);
   const [maxPage, setMaxPage] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
-  const [previewRect, setPreviewRect] = useState<Rectangle | null>(null);
+  const [previewRect, setPreviewRect] = useState<Rect | null>(null);
   const [{ startX, startY }, setStartPos] = useState({
     startX: -1,
     startY: -1,
@@ -48,26 +46,24 @@ export default (props: Props) => {
       const offsetX = container.offsetLeft;
       const offsetY = container.offsetTop;
       const scrollTop = container.scrollTop;
-      const positionRetioX = (pageX - offsetX) / container.clientWidth;
-      const positionRetioY =
-        (pageY - offsetY + scrollTop) / container.clientHeight;
 
       setStartPos({
         startX: clientX,
         startY: clientY,
       });
+
       setPreviewRect({
         left: clientX,
         top: clientY,
         right: clientX,
         bottom: clientY,
       });
+
       setResult({
-        startResultX: positionRetioX,
-        startResultY: positionRetioY,
+        startResultX: pageX - offsetX,
+        startResultY: pageY - offsetY + scrollTop,
       });
       setIsDragging(true);
-      console.log("onMouseDown");
     },
     []
   );
@@ -110,43 +106,46 @@ export default (props: Props) => {
       const offsetX = container.offsetLeft;
       const offsetY = container.offsetTop;
       const scrollTop = container.scrollTop;
-      const positionRetioX = (pageX - offsetX) / container.clientWidth;
-      const positionRetioY =
-        (pageY - offsetY + scrollTop) / container.clientHeight;
+      const resultX = pageX - offsetX;
+      const resultY = pageY - offsetY + scrollTop;
 
       setIsDragging(false);
       setStartPos({ startX: -1, startY: -1 });
       setPreviewRect(null);
 
-      const fixedResultRect = fixRect({
-        left: startResultX,
-        top: startResultY,
-        right: positionRetioX,
-        bottom: positionRetioY,
-      });
-
-      const widthRatio = fixedResultRect.right - fixedResultRect.left;
-      const heightRatio = fixedResultRect.bottom - fixedResultRect.top;
-
-      if (
-        container.clientWidth *
-          container.clientHeight *
-          widthRatio *
-          heightRatio <
-        100
-      ) {
-        return;
-      }
-
       const drawable = drawableRef.current;
       if (drawable == null) {
         return;
       }
-      const canvas = document.createElement("canvas");
       const img: HTMLImageElement = drawable;
 
-      canvas.width = img.naturalWidth * widthRatio;
-      canvas.height = img.naturalHeight * heightRatio;
+      const fixedResultRect = new Rectangle(
+        container.clientWidth,
+        container.clientHeight,
+        fixRect({
+          left: startResultX,
+          top: startResultY,
+          right: resultX,
+          bottom: resultY,
+        })
+      );
+
+      const convertedRect = fixedResultRect.convert({
+        width: img.naturalWidth,
+        height: img.naturalHeight,
+      });
+
+      const imgWidth = convertedRect.right - convertedRect.left;
+      const imgHeight = convertedRect.bottom - convertedRect.top;
+
+      if (imgWidth * imgWidth < 100) {
+        return;
+      }
+
+      const canvas = document.createElement("canvas");
+
+      canvas.width = imgWidth;
+      canvas.height = imgHeight;
 
       const ctx = canvas.getContext("2d");
       if (ctx == null) {
@@ -155,10 +154,10 @@ export default (props: Props) => {
 
       ctx.drawImage(
         img,
-        img.naturalWidth * fixedResultRect.left,
-        img.naturalHeight * fixedResultRect.top,
-        img.naturalWidth * widthRatio,
-        img.naturalHeight * heightRatio,
+        convertedRect.left,
+        convertedRect.top,
+        imgWidth,
+        imgHeight,
         0,
         0,
         canvas.width,
@@ -167,29 +166,14 @@ export default (props: Props) => {
 
       // setDebugImg(canvas.toDataURL());
 
-      props.onAddRect(fixedResultRect, canvas);
-
-      console.log({ onMouseUp: fixedResultRect });
+      props.onAddRect(canvas);
     },
     [isDragging, startResultX, startResultY, drawableRef]
-  );
-
-  const createOnClickRect = useCallback(
-    (index: number) => {
-      return () => {
-        if (!props.onClickRect) {
-          return;
-        }
-        props.onClickRect(index);
-      };
-    },
-    [props.rectangles]
   );
 
   const onLoadPDF = useCallback((doc: PDFDocumentProxy) => {
     setPage(1);
     setMaxPage(doc.numPages);
-    console.log(doc.numPages);
   }, []);
 
   const onLoadPDFPageBegin = useCallback(() => {}, []);
@@ -255,20 +239,6 @@ export default (props: Props) => {
           {previewRect ? (
             <PreviewRect color="red" position="fixed" {...previewRect} />
           ) : null}
-          {props.rectangles.map((rect, i) =>
-            i === props.showRectangleIndex ? (
-              <Rect
-                color="red"
-                position="absolute"
-                key={`rect-${i}`}
-                left={rect.left}
-                right={rect.right}
-                top={rect.top - (containerRef.current?.scrollTop || 0)}
-                bottom={rect.bottom - (containerRef.current?.scrollTop || 0)}
-                onClick={createOnClickRect(i)}
-              />
-            ) : null
-          )}
         </MediaPreviewContainer>
       </Container>
       {/* {debugImg !== "" ? <img src={debugImg} alt="" /> : null} */}
@@ -317,7 +287,7 @@ const PreviewRect = styled.div.attrs((props: RectProps) => ({
   border: 2px solid ${({ color }: RectProps) => color};
 `;
 
-function fixRect(rect: Rectangle): Rectangle {
+function fixRect(rect: Rect): Rect {
   const { left, right } =
     rect.left < rect.right
       ? { left: rect.left, right: rect.right }
