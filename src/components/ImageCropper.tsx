@@ -1,7 +1,7 @@
 import React, { RefObject, useCallback, useRef, useState } from "react";
 import styled from "styled-components";
 import Rectangle, { Rect } from "../domain/Recrangle";
-import PDFView from "../components/PDFView";
+import PDFView from "./PDFView";
 import { PDFDocumentProxy } from "pdfjs-dist";
 import Controll from "./Controll";
 

@@ -1,5 +1,5 @@
 import React, { useCallback, useContext } from "react";
-import ImageCutter from "../components/ImageCutter";
+import ImageCutter from "../components/ImageCropper";
 import { AppContext } from "./App";
 
 type Props = {
