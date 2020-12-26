@@ -29,15 +29,7 @@ export default React.forwardRef<HTMLImageElement, Props>((props, ref) => {
       if (pdfDoc == null || container == null) {
         return;
       }
-      const testViewport = page.getViewport({
-        scale: 2.0 * window.devicePixelRatio,
-        rotation: 0,
-      });
-      const scale = getViewPortScale(testViewport, {
-        width: container.clientWidth,
-        height: container.clientHeight,
-      });
-      const fixedViewPort = page.getViewport({ scale, rotation: 0 });
+      const fixedViewPort = page.getViewport({ scale: 2.0, rotation: 0 });
       const canvas = document.createElement("canvas");
       setViewPort(fixedViewPort);
       canvas.height = fixedViewPort.height;
@@ -81,7 +73,10 @@ export default React.forwardRef<HTMLImageElement, Props>((props, ref) => {
       });
     } else {
       // まだそのページを描画してない && そのページが描画中でない
-      if (renderResults[props.page - 1] == null && renderQueue.findIndex(v => v === props.page) < 0) {
+      if (
+        renderResults[props.page - 1] == null &&
+        renderQueue.findIndex(v => v === props.page) < 0
+      ) {
         setRenderQueue([...renderQueue, props.page]);
         if (renderQueue.length === 0) {
           if (props.onLoadPDFPageBegin) {
