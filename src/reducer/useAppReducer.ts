@@ -1,5 +1,4 @@
 import { useReducer } from "react";
-import Rectangle from "../domain/Recrangle";
 
 type OCRResult = {
   text: string;
@@ -12,8 +11,9 @@ export type AppState = {
   fileType: AcceptFileType;
   imageSrc: string | null;
   ocrResults: OCRResult[];
-  showRectangleIndex: number;
   showCopied: number;
+  pageNum: number;
+  maxPages: number;
 };
 
 export const initialState: AppState = {
@@ -21,17 +21,19 @@ export const initialState: AppState = {
   ocrResults: [],
   fileType: "image",
   showCopied: -1,
-  showRectangleIndex: -1,
+  pageNum: 1,
+  maxPages: 1,
 };
 
-type Actions = ReturnType<
+export type Actions = ReturnType<
   | typeof ImageLoaded
   | typeof StartJob
   | typeof UpdateProgress
   | typeof JobError
   | typeof JobComplete
+  | typeof SetPageNum
+  | typeof SetMaxPages
   | typeof SetShowCopied
-  | typeof SetShowRectangleIndex
   | typeof AddResult
 >;
 
@@ -70,10 +72,16 @@ export const SetShowCopied = (index: number) => ({
   index,
 });
 
-const SET_SHOW_RECTANGLE_INDEX = "SET_SHOW_RECTANGLE_INDEX" as const;
-export const SetShowRectangleIndex = (index: number) => ({
-  type: SET_SHOW_RECTANGLE_INDEX,
-  index,
+const SET_PAGE_NUM = "SET_PAGE_NUM" as const;
+export const SetPageNum = (page: number) => ({
+  type: SET_PAGE_NUM,
+  page,
+});
+
+const SET_MAX_PAGES = "SET_MAX_PAGES" as const;
+export const SetMaxPages = (page: number) => ({
+  type: SET_MAX_PAGES,
+  page,
 });
 
 const ADD_RESULT = "ADD_RESULT" as const;
@@ -137,10 +145,17 @@ function reducer(state: AppState, action: Actions): AppState {
       };
     }
 
-    case SET_SHOW_RECTANGLE_INDEX: {
+    case SET_PAGE_NUM: {
       return {
         ...state,
-        showRectangleIndex: action.index,
+        pageNum: action.page,
+      };
+    }
+
+    case SET_MAX_PAGES: {
+      return {
+        ...state,
+        maxPages: action.page,
       };
     }
 

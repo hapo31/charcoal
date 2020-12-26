@@ -4,20 +4,22 @@ import Rectangle, { Rect } from "../domain/Recrangle";
 import PDFView from "./PDFView";
 import { PDFDocumentProxy } from "pdfjs-dist";
 import Controll from "./Controll";
+import { AcceptFileType } from "../reducer/useAppReducer";
 
 type Props = {
-  fileType: "image" | "pdf";
+  fileType: AcceptFileType;
+  page: number;
+  maxPages: number;
   src: string;
-  onLoad: (event: React.ChangeEvent<HTMLImageElement>) => void;
+  onLoad: (fileType: AcceptFileType, maxPages?: number) => void;
   onClickRect?: (rectIndex: number) => void;
   onAddRect: (resultImage: HTMLCanvasElement) => void;
+  onChangePageNum: (page: number) => void;
 };
 
 export default (props: Props) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const drawableRef = useRef<HTMLImageElement>(null);
-  const [page, setPage] = useState(1);
-  const [maxPage, setMaxPage] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [previewRect, setPreviewRect] = useState<Rect | null>(null);
   const [{ startX, startY }, setStartPos] = useState({
@@ -171,9 +173,12 @@ export default (props: Props) => {
     [isDragging, startResultX, startResultY, drawableRef]
   );
 
+  const onLoadImage = useCallback(() => {
+    props.onLoad("image");
+  }, []);
+
   const onLoadPDF = useCallback((doc: PDFDocumentProxy) => {
-    setPage(1);
-    setMaxPage(doc.numPages);
+    props.onLoad("pdf", doc.numPages);
   }, []);
 
   const onLoadPDFPageBegin = useCallback(() => {}, []);
@@ -181,15 +186,15 @@ export default (props: Props) => {
   const onLoadPDFPage = useCallback(() => {}, []);
 
   const onClickPlus = useCallback((value: number) => {
-    setPage(value);
+    props.onChangePageNum(value);
   }, []);
 
   const onClickMinus = useCallback((value: number) => {
-    setPage(value);
+    props.onChangePageNum(value);
   }, []);
 
   const onChangePage = useCallback((value: number) => {
-    setPage(value);
+    props.onChangePageNum(value);
   }, []);
 
   return (
@@ -197,8 +202,8 @@ export default (props: Props) => {
       <Container>
         {props.fileType === "pdf" ? (
           <Controll
-            pageNum={page}
-            maxPage={maxPage}
+            pageNum={props.page}
+            maxPage={props.maxPages}
             onChangePage={onChangePage}
             onClickPlusButton={onClickPlus}
             onClickMinusButton={onClickMinus}
@@ -218,7 +223,7 @@ export default (props: Props) => {
             <img
               src={props.src}
               ref={drawableRef}
-              onLoad={props.onLoad}
+              onLoad={onLoadImage}
               style={{
                 display: "inline-block",
                 width: "100%",
@@ -229,7 +234,7 @@ export default (props: Props) => {
             <PDFView
               ref={drawableRef}
               src={props.src}
-              page={page}
+              page={props.page}
               onLoadPDF={onLoadPDF}
               onLoadPDFPageBegin={onLoadPDFPageBegin}
               onLoadPDFPage={onLoadPDFPage}

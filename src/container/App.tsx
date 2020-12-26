@@ -12,7 +12,9 @@ import {
   ImageLoaded,
   initialState as appInitialState,
   SetShowCopied,
-  SetShowRectangleIndex,
+  AcceptFileType,
+  SetMaxPages,
+  SetPageNum,
 } from "../reducer/useAppReducer";
 
 import DnDArea from "../components/DnDArea";
@@ -111,6 +113,13 @@ export default () => {
     });
   }, []);
 
+  const onLoad = useCallback((fileType: AcceptFileType, maxPages?: number) => {
+    if (fileType === "pdf" && maxPages != null) {
+      dispatchAppState(SetPageNum(1));
+      dispatchAppState(SetMaxPages(maxPages));
+    }
+  }, []);
+
   return (
     <>
       <RootContainer>
@@ -124,7 +133,7 @@ export default () => {
             </>
           ) : (
             <AppContext.Provider value={appState}>
-              <ImageViewerContainer onAddTask={onAddTask} />
+              <ImageViewerContainer dispatch={dispatchAppState} onLoad={onLoad} onAddTask={onAddTask} />
             </AppContext.Provider>
           )}
         </ImageContainer>
@@ -146,12 +155,8 @@ export default () => {
                     }, 1000)
                   );
                 }}
-                onMouseEnter={() => {
-                  dispatchAppState(SetShowRectangleIndex(i));
-                }}
-                onMouseLeave={() => {
-                  dispatchAppState(SetShowRectangleIndex(-1));
-                }}
+                onMouseEnter={() => {}}
+                onMouseLeave={() => {}}
                 isComplete={result.isCompleted}
                 progress={result.progress}
                 text={result.text}

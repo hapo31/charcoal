@@ -80,12 +80,9 @@ export default React.forwardRef<HTMLImageElement, Props>((props, ref) => {
         props.onLoadPDF(doc);
       });
     } else {
-      // まだそのページを描画してない
-      if (renderResults[props.page - 1] == null) {
-        // そのページが描画中なら描画しない
-        if (renderQueue.findIndex(v => v === props.page) >= 0) {
-          return;
-        }
+      // まだそのページを描画してない && そのページが描画中でない
+      if (renderResults[props.page - 1] == null && renderQueue.findIndex(v => v === props.page) < 0) {
+        setRenderQueue([...renderQueue, props.page]);
         if (renderQueue.length === 0) {
           if (props.onLoadPDFPageBegin) {
             props.onLoadPDFPageBegin();
@@ -100,13 +97,6 @@ export default React.forwardRef<HTMLImageElement, Props>((props, ref) => {
         }
       }
     }
-
-    return () => {
-      // if(pdfDoc == null) {
-      //   return;
-      // }
-      // pdfDoc.destroy();
-    };
   }, [pdfDoc, renderQueue, renderResults, props.page]);
 
   return (
