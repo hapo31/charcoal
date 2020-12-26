@@ -133,7 +133,11 @@ export default () => {
             </>
           ) : (
             <AppContext.Provider value={appState}>
-              <ImageViewerContainer dispatch={dispatchAppState} onLoad={onLoad} onAddTask={onAddTask} />
+              <ImageViewerContainer
+                dispatch={dispatchAppState}
+                onLoad={onLoad}
+                onAddTask={onAddTask}
+              />
             </AppContext.Provider>
           )}
         </ImageContainer>

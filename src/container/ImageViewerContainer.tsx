@@ -1,10 +1,6 @@
 import React, { useCallback, useContext } from "react";
 import ImageCropper from "../components/ImageCropper";
-import {
-  AcceptFileType,
-  Actions,
-  SetPageNum,
-} from "../reducer/useAppReducer";
+import { AcceptFileType, Actions, SetPageNum } from "../reducer/useAppReducer";
 import { AppContext } from "./App";
 
 type Props = {
