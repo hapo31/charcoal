@@ -1,9 +1,7 @@
-/* eslint-disable @typescript-eslint/no-var-requires */
+/* eslint-disable */
 const CopyWebpackPlugin = require("copy-webpack-plugin");
 const path = require("path");
 const isDev = process.env.NODE_ENV !== "production";
-
-/* eslint-enable */
 
 const outputPath = path.resolve(__dirname, "dist");
 const resolveExt = [".json", ".js", ".jsx", ".css", ".ts", ".tsx"];
