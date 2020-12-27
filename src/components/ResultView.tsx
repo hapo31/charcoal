@@ -33,7 +33,7 @@ export default (props: Props) => {
       ) : (
         <>
           <Loading />
-          <ProgressBar color="#25f" percentOf0To1={props.progress} />
+          <ProgressBar percentOf0To1={props.progress} />
         </>
       )}
     </Container>
@@ -46,11 +46,11 @@ const Container = styled.div`
   font-size: 10px;
   padding: 3px;
   margin-bottom: 3px;
-  background-color: #7af;
-  box-shadow: 0 0 0 1px #25f;
+  background-color: #777;
+  box-shadow: 0 0 0 1px #222;
   margin: 2px 2px 4px 2px;
   :hover {
-    background-color: #9af;
+    background-color: #aaa;
     transition: color 0.3;
   }
 `;

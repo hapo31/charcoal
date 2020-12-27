@@ -3,24 +3,22 @@ import styled, { CSSProperties } from "styled-components";
 
 type Props = {
   percentOf0To1: number;
-  color: string;
 };
 
 export default (props: Props) => (
   <Container>
-    <Bar percent={props.percentOf0To1} color={props.color} />
+    <Bar percent={props.percentOf0To1} />
   </Container>
 );
 
 type StyledProps = {
   percent: number;
-  color: string;
   style?: CSSProperties;
 };
 
 const Container = styled.span`
   display: inline-block;
-  box-shadow: 0 0 0 2px gray;
+  box-shadow: 0 0 0 2px #222;
   padding: 2px;
   margin-right: 2px;
   width: 98%;
@@ -33,6 +31,7 @@ const Bar = styled.div.attrs((props: StyledProps) => ({
     width: `calc(100% - ${Math.floor((1.0 - props.percent) * 100)}%)`,
   },
 }))`
+  ${({ percent }: { percent: number }) => ``};
   height: 100%;
-  background-color: ${({ color }: StyledProps) => color};
+  background-color: #aaa;
 `;

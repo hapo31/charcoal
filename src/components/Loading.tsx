@@ -21,7 +21,7 @@ const Spinner = styled.div`
 
 const Rect = styled.div`
   margin: 0 1px 0;
-  background-color: blue;
+  background-color: #eee;
   height: 20px;
   width: 6px;
   display: inline-block;
