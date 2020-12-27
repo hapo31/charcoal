@@ -1,6 +1,12 @@
 import React, { useCallback, useContext } from "react";
 import ImageCropper from "../components/ImageCropper";
-import { AcceptFileType, Actions, SetPageNum } from "../reducer/useAppReducer";
+import {
+  AcceptFileType,
+  Actions,
+  SetPageNum,
+  TurnLeft,
+  TurnRight,
+} from "../reducer/useAppReducer";
 import { AppContext } from "./App";
 
 type Props = {
@@ -24,15 +30,25 @@ export default (props: Props) => {
     props.dispatch(SetPageNum(value));
   }, []);
 
+  const onClickRotate = useCallback((dir: "left" | "right") => {
+    if (dir === "left") {
+      props.dispatch(TurnLeft());
+    } else {
+      props.dispatch(TurnRight());
+    }
+  }, []);
+
   return (
     <ImageCropper
       fileType={appState.fileType}
       src={appState.imageSrc || ""}
       page={appState.pageNum}
       maxPages={appState.maxPages}
+      rotate={appState.rotate}
       onAddRect={onAddRect}
       onLoad={onLoad}
       onChangePageNum={onChangePageNum}
+      onClickRotate={onClickRotate}
     />
   );
 };

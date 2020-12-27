@@ -11,10 +11,12 @@ type Props = {
   page: number;
   maxPages: number;
   src: string;
+  rotate: number;
   onLoad: (fileType: AcceptFileType, maxPages?: number) => void;
   onClickRect?: (rectIndex: number) => void;
   onAddRect: (resultImage: HTMLCanvasElement) => void;
   onChangePageNum: (page: number) => void;
+  onClickRotate: (dir: "left" | "right") => void;
 };
 
 export default (props: Props) => {
@@ -197,6 +199,14 @@ export default (props: Props) => {
     props.onChangePageNum(value);
   }, []);
 
+  const onClickTurnLeft = useCallback(() => {
+    props.onClickRotate("left");
+  }, []);
+
+  const onClickTurnRight = useCallback(() => {
+    props.onClickRotate("right");
+  }, []);
+
   return (
     <>
       <Container>
@@ -207,6 +217,8 @@ export default (props: Props) => {
             onChangePage={onChangePage}
             onClickPlusButton={onClickPlus}
             onClickMinusButton={onClickMinus}
+            onClickTurnLeft={onClickTurnLeft}
+            onClickTurnRight={onClickTurnRight}
           />
         ) : null}
         <MediaPreviewContainer
@@ -235,6 +247,7 @@ export default (props: Props) => {
               ref={drawableRef}
               src={props.src}
               page={props.page}
+              rotate={props.rotate}
               onLoadPDF={onLoadPDF}
               onLoadPDFPageBegin={onLoadPDFPageBegin}
               onLoadPDFPage={onLoadPDFPage}

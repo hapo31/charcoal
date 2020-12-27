@@ -11,16 +11,20 @@ import Loading from "./Loading";
 type Props = {
   src: string;
   page: number;
+  rotate: number;
   onLoadPDF: (doc: PDFDocumentProxy) => void;
   onLoadPDFPageBegin?: () => void;
   onLoadPDFPage?: (doc: PDFPageProxy) => void;
 };
 export default React.forwardRef<HTMLImageElement, Props>((props, ref) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [renderResults, setRenderResults] = useState<(string | null)[]>([]);
+  const [renderResults, setRenderResults] = useState<
+    ({ url: string; rotate: number } | null)[]
+  >([]);
   const [renderQueue, setRenderQueue] = useState<number[]>([]);
   const [pdfDoc, setPDFDoc] = useState<PDFDocumentProxy | null>(null);
   const [{ width, height }, setViewPort] = useState({ width: 0, height: 0 });
+  const [prevRotate, setPrevRotate] = useState(props.rotate);
 
   const renderPage = useCallback(
     (page: PDFPageProxy) => {
@@ -29,7 +33,10 @@ export default React.forwardRef<HTMLImageElement, Props>((props, ref) => {
       if (pdfDoc == null || container == null) {
         return;
       }
-      const fixedViewPort = page.getViewport({ scale: 2.0, rotation: 0 });
+      const fixedViewPort = page.getViewport({
+        scale: 2.0,
+        rotation: props.rotate * 90,
+      });
       const canvas = document.createElement("canvas");
       setViewPort(fixedViewPort);
       canvas.height = fixedViewPort.height;
@@ -47,7 +54,10 @@ export default React.forwardRef<HTMLImageElement, Props>((props, ref) => {
           return;
         }
         props.onLoadPDFPage(page);
-        renderResults[page.pageNumber - 1] = canvas.toDataURL();
+        renderResults[page.pageNumber - 1] = {
+          url: canvas.toDataURL(),
+          rotate: props.rotate,
+        };
         setRenderResults([...renderResults]);
         renderQueue.splice(
           renderQueue.findIndex(v => v === page.pageNumber),
@@ -60,7 +70,7 @@ export default React.forwardRef<HTMLImageElement, Props>((props, ref) => {
         }
       });
     },
-    [pdfDoc, renderResults]
+    [pdfDoc, renderResults, props.rotate]
   );
 
   useEffect(() => {
@@ -72,6 +82,10 @@ export default React.forwardRef<HTMLImageElement, Props>((props, ref) => {
         props.onLoadPDF(doc);
       });
     } else {
+      if (props.rotate != prevRotate) {
+        setRenderResults(new Array(pdfDoc.numPages).fill(null));
+      }
+
       // まだそのページを描画してない && そのページが描画中でない
       if (
         renderResults[props.page - 1] == null &&
@@ -92,7 +106,8 @@ export default React.forwardRef<HTMLImageElement, Props>((props, ref) => {
         }
       }
     }
-  }, [pdfDoc, renderQueue, renderResults, props.page]);
+    setPrevRotate(props.rotate);
+  }, [pdfDoc, renderQueue, renderResults, props.page, props.rotate]);
 
   return (
     <Container ref={containerRef}>
@@ -101,9 +116,9 @@ export default React.forwardRef<HTMLImageElement, Props>((props, ref) => {
           <Loading />
         </DummyContainer>
       ) : null}
-      {renderResults.map((url, i) =>
-        i === props.page - 1 && url != null ? (
-          <Img key={`pdf-result-${i}`} ref={ref} src={url} />
+      {renderResults.map((result, i) =>
+        i === props.page - 1 && result != null ? (
+          <Img key={`pdf-result-${i}`} ref={ref} src={result.url} />
         ) : null
       )}
     </Container>

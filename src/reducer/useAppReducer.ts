@@ -14,6 +14,7 @@ export type AppState = {
   showCopied: number;
   pageNum: number;
   maxPages: number;
+  rotate: number;
 };
 
 export const initialState: AppState = {
@@ -23,6 +24,7 @@ export const initialState: AppState = {
   showCopied: -1,
   pageNum: 1,
   maxPages: 1,
+  rotate: 0,
 };
 
 export type Actions = ReturnType<
@@ -35,6 +37,8 @@ export type Actions = ReturnType<
   | typeof SetMaxPages
   | typeof SetShowCopied
   | typeof AddResult
+  | typeof TurnLeft
+  | typeof TurnRight
 >;
 
 export type AcceptFileType = "image" | "pdf";
@@ -88,6 +92,16 @@ const ADD_RESULT = "ADD_RESULT" as const;
 export const AddResult = (ocrResult: OCRResult) => ({
   type: ADD_RESULT,
   ocrResult,
+});
+
+const TURN_LEFT = "TURN_LEFT" as const;
+export const TurnLeft = () => ({
+  type: TURN_LEFT,
+});
+
+const TURN_RIGHT = "TURN_RIGHT" as const;
+export const TurnRight = () => ({
+  type: TURN_RIGHT,
 });
 
 function reducer(state: AppState, action: Actions): AppState {
@@ -161,6 +175,16 @@ function reducer(state: AppState, action: Actions): AppState {
 
     case ADD_RESULT: {
       return { ...state, ocrResults: [...state.ocrResults, action.ocrResult] };
+    }
+
+    case TURN_LEFT: {
+      const next = state.rotate - 1;
+      return { ...state, rotate: next <= -1 ? 3 : next };
+    }
+
+    case TURN_RIGHT: {
+      const next = (state.rotate + 1) % 4;
+      return { ...state, rotate: next };
     }
 
     default:

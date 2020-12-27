@@ -1,10 +1,13 @@
 import React, { useCallback, useEffect, useRef } from "react";
 import styled from "styled-components";
+import TurnArrow from "./TurnArrow";
 
 type Props = {
   pageNum: number;
   maxPage: number;
   disabled?: boolean;
+  onClickTurnLeft: () => void;
+  onClickTurnRight: () => void;
   onClickPlusButton: (nextValue: number) => void;
   onClickMinusButton: (nextValue: number) => void;
   onChangePage: (value: number) => void;
@@ -28,6 +31,14 @@ export default (props: Props) => {
       props.onClickMinusButton(props.pageNum);
     }
   }, [props.pageNum, props.maxPage]);
+
+  const onClickTurnLeft = useCallback(() => {
+    props.onClickTurnLeft();
+  }, []);
+
+  const onClickTurnRight = useCallback(() => {
+    props.onClickTurnRight();
+  }, []);
 
   const onKeyPress = useCallback(
     (event: React.KeyboardEvent) => {
@@ -72,6 +83,9 @@ export default (props: Props) => {
 
   return (
     <Container>
+      <Button onClick={onClickTurnLeft} disabled={props.disabled}>
+        <TurnArrow dir="left" />
+      </Button>
       <Button onClick={onClickMinus} disabled={props.disabled}>
         -
       </Button>
@@ -87,6 +101,9 @@ export default (props: Props) => {
       <Input value={props.maxPage} disabled />
       <Button onClick={onClickPlus} disabled={props.disabled}>
         +
+      </Button>
+      <Button onClick={onClickTurnRight} disabled={props.disabled}>
+        <TurnArrow dir="right" />
       </Button>
     </Container>
   );
