@@ -4,7 +4,7 @@ const path = require("path");
 const isDev = process.env.NODE_ENV !== "production";
 
 const outputPath = path.resolve(__dirname, "dist");
-const resolveExt = [".json", ".js", ".jsx", ".css", ".ts", ".tsx"];
+const resolveExt = [".json", ".js", ".jsx", ".css", ".ts", ".tsx", ".svg"];
 
 var renderer = {
   mode: isDev ? "development" : "production",
@@ -26,6 +26,12 @@ var renderer = {
         exclude: [path.resolve(__dirname, "node_modules")],
         loader: "ts-loader",
       },
+      {
+        test: /.svg$/,
+        include: [path.resolve(__dirname, "img")],
+        exclude: [path.resolve(__dirname, "node_modules")],
+        loader: "react-svg-loader",
+      }
     ],
   },
   resolve: {
